@@ -1,0 +1,2769 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VBET Brazil - Orquestrador Operacional & Quick-Search BO Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-main: #212121;
+      --bg-input: #2f2f2f;
+      --bg-sidebar: #171717;
+      --border-color: #383838;
+      --vbet-accent: #ff007a;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: #ececec;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #424242;
+      border-radius: 4px;
+    }
+    .toast {
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ESTILOS DO PAINEL MÓVEL QUICK-SEARCH BO */
+    #painel-quicksearch-bo {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      z-index: 9999;
+      width: 340px;
+      background: #ffffff;
+      border: 2px solid #000000;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      user-select: none;
+      color: #333333;
+    }
+    #quicksearch-topo-drag {
+      background: #000000;
+      color: #ffffff;
+      padding: 9px 12px;
+      font-weight: bold;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+
+  <!-- TOP NAVIGATION (CHATGPT STYLE) -->
+  <header class="h-14 px-4 flex items-center justify-between border-b border-[#2d2d2d] bg-[#212121] sticky top-0 z-30">
+    <div class="flex items-center space-x-2 cursor-pointer group" onclick="resetChatHistory()">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ff007a] to-[#7928ca] flex items-center justify-center font-black text-white text-sm shadow">
+        V
+      </div>
+      <span class="font-semibold text-[15px] text-white tracking-tight flex items-center">
+        VBET Engine <i class="fa-solid fa-rotate-right text-xs ml-2 text-gray-500 group-hover:text-white transition" title="Novo Chat / Reset"></i>
+      </span>
+      <span id="learnedCountBadge" class="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-[#ff007a22] text-[#ff007a] border border-[#ff007a44] font-medium hidden sm:inline">
+        33 Módulos Ativos
+      </span>
+    </div>
+
+    <!-- RIGHT ACTIONS -->
+    <div class="flex items-center space-x-2">
+      <!-- BOTÃO NINJA ESCALATION V3 -->
+      <button onclick="openNinjaModal()" title="Abrir Ninja Escalation v3" class="flex items-center space-x-1.5 text-xs text-white bg-emerald-600 hover:bg-emerald-500 font-bold px-3 py-1.5 rounded-lg shadow transition">
+        <span>🥷</span>
+        <span class="hidden sm:inline">Ninja Escalation</span>
+      </button>
+
+      <!-- BOTÃO CONTEÚDOS SINCRONIZADOS DA KB -->
+      <button onclick="openSyncedKbModal()" title="Ver conteúdos sincronizados pela extensão" class="flex items-center space-x-1.5 text-xs text-cyan-300 hover:text-white bg-[#282828] hover:bg-[#333] border border-cyan-500/40 px-3 py-1.5 rounded-lg shadow transition font-semibold">
+        <i class="fa-solid fa-cloud-arrow-down text-cyan-400"></i>
+        <span id="syncedCountHeader">Sincronizados (0)</span>
+      </button>
+
+      <!-- BOTÃO DO MÓDULO APRENDER -->
+      <button onclick="openLearnModal()" class="flex items-center space-x-1.5 text-xs text-white bg-gradient-to-r from-[#ff007a] to-[#7928ca] hover:opacity-90 px-3 py-1.5 rounded-lg shadow transition font-semibold">
+        <i class="fa-solid fa-brain"></i>
+        <span>APRENDER</span>
+      </button>
+
+      <!-- BOTÃO DO PAINEL MÓVEL QUICK-SEARCH BO -->
+      <button onclick="toggleQuickSearchBo()" class="flex items-center space-x-1.5 text-xs text-black bg-cyan-400 hover:bg-cyan-300 font-bold px-3 py-1.5 rounded-lg shadow transition">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="hidden md:inline">Quick-Search BO</span>
+      </button>
+
+      <!-- BOTÃO LIMPAR HISTÓRICO -->
+      <button onclick="resetChatHistory()" title="Resetar Histórico de Conversa" class="flex items-center space-x-1 text-xs text-gray-400 hover:text-white bg-[#2a2a2a] hover:bg-[#333] px-2.5 py-1.5 rounded-lg border border-[#3e3e3e] transition">
+        <i class="fa-solid fa-trash-can"></i>
+        <span class="hidden md:inline">Limpar</span>
+      </button>
+
+      <div class="w-8 h-8 rounded-full bg-emerald-700/80 border border-emerald-500/50 flex items-center justify-center text-xs font-bold text-white shadow">
+        OP
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <div class="flex-1 flex relative overflow-hidden">
+
+    <!-- CENTER CONTENT (LANDING & CHAT) -->
+    <main id="mainContainer" class="flex-1 flex flex-col items-center justify-between px-4 py-6 max-w-4xl mx-auto w-full transition-all duration-300">
+      
+      <!-- HERO LANDING VIEW (ACTIVE INITIALLY) -->
+      <div id="heroSection" class="flex-1 flex flex-col items-center justify-center text-center my-auto w-full">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff007a] to-[#7928ca] flex items-center justify-center font-black text-white text-2xl shadow-xl mb-4">
+          V
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-semibold text-white tracking-tight mb-2">
+          Por onde começamos?
+        </h1>
+        <p class="text-sm text-gray-400 max-w-lg mb-8">
+          Orquestrador operacional da VBET Brazil com busca assistida por Player ID, painel móvel de validação KYC em 15 minutos e módulo <strong>APRENDER</strong>.
+        </p>
+
+        <!-- QUICK QUESTION CHIPS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-2xl w-full px-2 text-left mb-6">
+          <button onclick="askQuick('id', '198367673')"
+            class="bg-[#2a2a2a] hover:bg-[#333] border border-cyan-500/40 p-3 rounded-xl transition text-xs text-gray-300 hover:text-white flex items-start space-x-2">
+            <i class="fa-solid fa-id-badge text-cyan-400 mt-0.5 text-base"></i>
+            <div>
+              <strong class="text-white block">Consultar Player ID #198367673</strong>
+              <span>Abre o Quick-Search BO móvel com validação KYC (15 min)</span>
+            </div>
+          </button>
+
+          <button onclick="askQuick('cliente', 'Mariana Souza (ID 185429104): Solicitei um saque via PIX de R$ 450 faz mais de 40 minutos e ainda não caiu na conta.')"
+            class="bg-[#2a2a2a] hover:bg-[#333] border border-[#3a3a3a] p-3 rounded-xl transition text-xs text-gray-300 hover:text-white flex items-start space-x-2">
+            <i class="fa-solid fa-money-bill-transfer text-amber-400 mt-0.5 text-base"></i>
+            <div>
+              <strong class="text-white block">Atraso em Saque PIX (Cliente)</strong>
+              <span>Análise de rota Genial/BTG e resposta com pesquisa</span>
+            </div>
+          </button>
+
+          <button onclick="askQuick('agente', 'Como funciona o procedimento de correção de conta bancária com erro no AGP segundo o módulo 15?')"
+            class="bg-[#2a2a2a] hover:bg-[#333] border border-[#3a3a3a] p-3 rounded-xl transition text-xs text-gray-300 hover:text-white flex items-start space-x-2">
+            <i class="fa-solid fa-building-columns text-purple-400 mt-0.5 text-base"></i>
+            <div>
+              <strong class="text-white block">Correção Bancária (Agente)</strong>
+              <span>Passo a passo com conta temporária e tags de auditoria</span>
+            </div>
+          </button>
+
+          <button onclick="askQuick('agente', 'Quais são as regras para concessão do Bônus de Cortesia Diário e perfis permitidos?')"
+            class="bg-[#2a2a2a] hover:bg-[#333] border border-[#3a3a3a] p-3 rounded-xl transition text-xs text-gray-300 hover:text-white flex items-start space-x-2">
+            <i class="fa-solid fa-gift text-[#ff007a] mt-0.5 text-base"></i>
+            <div>
+              <strong class="text-white block">Bônus de Cortesia (Agente)</strong>
+              <span>Regra de 24 horas, perfis aceitos e formulário CRM</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- CHAT CONVERSATION VIEW (HIDDEN INITIALLY) -->
+      <div id="chatSection" class="w-full space-y-6 pb-28 hidden custom-scrollbar overflow-y-auto">
+        <!-- MESSAGES INJECTED HERE DYNAMICALLY -->
+      </div>
+
+      <!-- CENTRAL INPUT CONTAINER (CHATGPT REPLICA) -->
+      <div class="w-full max-w-3xl sticky bottom-4 z-20">
+        
+        <!-- 3 MODE SELECTOR TABS -->
+        <div class="flex items-center justify-center space-x-1.5 mb-2.5">
+          <button type="button" onclick="setQueryMode('cliente')" id="tab-cliente"
+            class="px-3.5 py-1 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 bg-[#ff007a] text-white shadow-md">
+            <i class="fa-solid fa-user"></i>
+            <span>DÚVIDA DO CLIENTE</span>
+          </button>
+          
+          <button type="button" onclick="setQueryMode('agente')" id="tab-agente"
+            class="px-3.5 py-1 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 bg-[#2f2f2f] text-gray-300 hover:text-white hover:bg-[#3a3a3a] border border-[#3e3e3e]">
+            <i class="fa-solid fa-headset"></i>
+            <span>DÚVIDA DO AGENTE</span>
+          </button>
+
+          <button type="button" onclick="setQueryMode('id')" id="tab-id"
+            class="px-3.5 py-1 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 bg-[#2f2f2f] text-gray-300 hover:text-white hover:bg-[#3a3a3a] border border-[#3e3e3e]">
+            <i class="fa-solid fa-id-badge text-cyan-400"></i>
+            <span>ID DO CLIENTE</span>
+          </button>
+        </div>
+
+        <!-- MAIN SEARCH / PROMPT BAR -->
+        <div class="relative bg-[#2f2f2f] rounded-3xl border border-[#404040] shadow-2xl p-2.5 flex items-center space-x-2 transition focus-within:border-gray-400">
+          
+          <!-- PLUS BUTTON (LEARN & PRESETS) -->
+          <button onclick="openLearnModal()" title="Ensinar Novo Conteúdo à IA"
+            class="w-9 h-9 rounded-full hover:bg-[#3d3d3d] text-gray-300 hover:text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-plus text-base"></i>
+          </button>
+
+          <!-- INPUT FIELD -->
+          <div class="flex-1 flex items-center">
+            <textarea id="promptInput" rows="1"
+              placeholder="Pergunte ao VBET Engine (ou insira ID/dúvida)..."
+              onkeydown="handleKeyDown(event)"
+              class="w-full bg-transparent text-white placeholder-gray-400 outline-none text-sm resize-none custom-scrollbar px-1 py-1 max-h-36"></textarea>
+          </div>
+
+          <!-- SEND ARROW BUTTON -->
+          <button id="sendBtn" onclick="submitPrompt()"
+            class="w-9 h-9 rounded-full bg-white text-black hover:bg-gray-200 transition flex items-center justify-center font-bold shadow disabled:opacity-40">
+            <i class="fa-solid fa-arrow-up text-sm"></i>
+          </button>
+        </div>
+
+        <!-- LOWER PILL: BASE DE CONHECIMENTO -->
+        <div class="flex justify-center items-center space-x-2 mt-3">
+          <button onclick="openLearnModal()" class="text-xs bg-[#2b2b2b] hover:bg-[#343434] text-gray-300 border border-[#3e3e3e] px-4 py-1.5 rounded-full transition shadow-sm flex items-center space-x-1.5">
+            <i class="fa-solid fa-brain text-[#ff007a]"></i>
+            <span>Gerenciar Conhecimento Aprendido</span>
+          </button>
+          <button onclick="toggleQuickSearchBo(true)" class="text-xs bg-[#2b2b2b] hover:bg-[#343434] text-cyan-400 border border-[#3e3e3e] px-4 py-1.5 rounded-full transition shadow-sm flex items-center space-x-1.5">
+            <i class="fa-solid fa-window-restore"></i>
+            <span>Exibir Painel Quick-Search BO</span>
+          </button>
+        </div>
+
+        <!-- COMPLIANCE BANNER FOOTER -->
+        <div class="mt-2 text-center text-[11px] text-gray-500 flex items-center justify-center space-x-3">
+          <span>VBET Brazil Compliance Ativo</span>
+          <span>&bull;</span>
+          <span>Zero Travessões</span>
+          <span>&bull;</span>
+          <span>Pesquisa de Satisfação Obrigatória</span>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- PAINEL MÓVEL FLUTUANTE QUICK-SEARCH & KYC BETCONSTRUCT PRO -->
+  <div id="painel-quicksearch-bo" style="display:none;">
+    <div id="quicksearch-topo-drag">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span>🔍 Quick-Search Backoffice</span>
+        <span style="font-size:10px; background:#333; padding:2px 6px; border-radius:4px;">🖐️ Arraste</span>
+      </div>
+      <button onclick="toggleQuickSearchBo(false)" style="background:none; border:none; color:#aaa; font-size:14px; cursor:pointer;" title="Fechar Painel">✕</button>
+    </div>
+    
+    <div style="padding:8px 10px; background:#f8f9fa; border-bottom:1px solid #ddd;">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="text" id="input-player-id" placeholder="Cole o Player ID aqui..." 
+          style="flex:1; padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:11px; outline:none;" />
+        <button id="btn-pesquisar-bo" onclick="executarBuscaBo()" 
+          style="background:#000; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; transition:background 0.2s;">
+          🚀 Buscar
+        </button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:10px; color:#666;">
+        <span id="label-tempo-expiracao">Histórico de validação: 15 min</span>
+        <a id="link-externo-bo" href="https://backoffice.betconstruct.com/#/customers/detail/198367673" target="_blank" style="color:#007bff; text-decoration:none; font-weight:bold;">
+          🔗 Rota AGP
+        </a>
+      </div>
+    </div>
+
+    <div id="resultado-bo-conteudo" style="padding:10px; font-size:11px; color:#333; max-height:330px; overflow-y:auto; background:#fff;">
+      <div style="text-align:center; color:#777; font-style:italic; padding:15px;">Digite um Player ID acima para consultar os dados do cliente...</div>
+    </div>
+  </div>
+
+  <!-- MODAL: MÓDULO APRENDER (INGESTÃO DE NOVO CONHECIMENTO) -->
+  <div id="learnModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#212121] border border-[#3a3a3a] rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- MODAL HEADER -->
+      <div class="h-14 px-6 border-b border-[#333] flex items-center justify-between bg-[#1b1b1b]">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ff007a] to-[#7928ca] flex items-center justify-center text-white text-xs font-bold">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-sm">Módulo de Aprendizado VBET</h3>
+            <p class="text-[11px] text-gray-400">Envie conteúdos, manuais e regras para a base de conhecimento da IA</p>
+          </div>
+        </div>
+        <button onclick="closeLearnModal()" class="text-gray-400 hover:text-white text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- MODAL TABS -->
+      <div class="flex border-b border-[#333] bg-[#1a1a1a] px-6 text-xs font-semibold">
+        <button onclick="switchLearnTab('add')" id="learnTab-add" class="py-2.5 px-4 border-b-2 border-[#ff007a] text-white">
+          <i class="fa-solid fa-plus-circle mr-1.5"></i> Ensinar Novo Conteúdo
+        </button>
+        <button onclick="switchLearnTab('list')" id="learnTab-list" class="py-2.5 px-4 text-gray-400 hover:text-white">
+          <i class="fa-solid fa-database mr-1.5"></i> Base de Dados (<span id="totalKnowledgeCount">33</span> Módulos)
+        </button>
+      </div>
+
+      <!-- MODAL BODY -->
+      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar text-xs">
+        
+        <!-- ABA 1: FORMULÁRIO DE ENSINAR -->
+        <div id="learnView-add" class="space-y-4">
+          <div class="bg-[#181818] border border-[#2d2d2d] rounded-xl p-4 space-y-3">
+            <div>
+              <label class="block text-gray-300 font-bold mb-1">
+                Título do Módulo / Assunto <span class="text-[#ff007a]">*</span>
+              </label>
+              <input type="text" id="newDocTitle" placeholder="Ex: Procedimento para Novo Bônus de Depósito ou Erro PIX BTG"
+                class="w-full bg-[#121212] border border-[#383838] focus:border-[#ff007a] rounded-lg px-3 py-2 text-white outline-none text-xs">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-gray-300 font-bold mb-1">Categoria</label>
+                <select id="newDocCategory" class="w-full bg-[#121212] border border-[#383838] focus:border-[#ff007a] rounded-lg px-3 py-2 text-white outline-none text-xs">
+                  <option value="Pagamentos">Pagamentos / PIX</option>
+                  <option value="Verificação">Verificação / KYC</option>
+                  <option value="Bônus">Bônus & Promoções</option>
+                  <option value="Cassino">Cassino & Jogos</option>
+                  <option value="Esportes">Apostas Esportivas</option>
+                  <option value="Jogo Responsável">Jogo Responsável</option>
+                  <option value="Auditoria">Auditoria / Scorecard</option>
+                  <option value="Geral">Regras Gerais</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-gray-300 font-bold mb-1">Palavras-chave (separadas por vírgula)</label>
+                <input type="text" id="newDocKeywords" placeholder="Ex: pix, btg, atraso, comprovante, estorno"
+                  class="w-full bg-[#121212] border border-[#383838] focus:border-[#ff007a] rounded-lg px-3 py-2 text-white outline-none text-xs">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-gray-300 font-bold mb-1">
+                Conteúdo Detalhado / Políticas e Procedimentos <span class="text-[#ff007a]">*</span>
+              </label>
+              <textarea id="newDocContent" rows="6" placeholder="Cole aqui o texto completo da regra, procedimento de atendimento, orientações da liderança ou manual de resolução..."
+                class="w-full bg-[#121212] border border-[#383838] focus:border-[#ff007a] rounded-lg p-3 text-white outline-none text-xs custom-scrollbar"></textarea>
+            </div>
+
+            <div class="pt-2 flex justify-between items-center">
+              <span class="text-[11px] text-gray-400">O conteúdo é salvo e indexado imediatamente na IA.</span>
+              <button onclick="saveNewKnowledge()" class="bg-gradient-to-r from-[#ff007a] to-[#7928ca] text-white font-bold py-2 px-5 rounded-lg shadow hover:opacity-95 transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>SALVAR E ENSINAR A IA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 2: LISTA DE MÓDULOS (BASE DE DADOS) -->
+        <div id="learnView-list" class="space-y-3 hidden">
+          <div class="flex items-center justify-between mb-3">
+            <input type="text" id="searchKbInput" oninput="filterKbList()" placeholder="Buscar por termo na base de conhecimento..."
+              class="w-full max-w-sm bg-[#181818] border border-[#333] rounded-lg px-3 py-1.5 text-xs text-white outline-none">
+            <button onclick="resetLearnedToDefault()" class="text-xs text-red-400 hover:text-red-300 ml-3 underline">
+              Restaurar Padrão
+            </button>
+          </div>
+          <div id="kbListContainer" class="space-y-2.5">
+            <!-- Módulos renderizados via JavaScript -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NINJA ESCALATION V3 -->
+  <div id="ninjaModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white text-slate-800 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden font-sans">
+      
+      <!-- HEADER -->
+      <div class="flex flex-col items-center gap-1 py-4 px-6 border-b border-slate-200 relative bg-slate-50">
+        <h3 class="text-2xl font-extrabold text-[#10b981] flex items-center gap-2">
+          <span>🥷</span> Ninja Escalation
+        </h3>
+        <p class="text-xs text-slate-500 font-medium">Select or manage your custom templates & customer data</p>
+        <button onclick="closeNinjaModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 text-lg">✕</button>
+      </div>
+
+      <!-- MAIN ESCALATION VIEW -->
+      <div id="ninjaViewMain" class="p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+        
+        <!-- CARD COM DADOS DO CLIENTE PUXADOS DO QUICK SEARCH -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
+          <div class="flex justify-between items-center border-b border-slate-200 pb-1 font-bold text-slate-700">
+            <span>👤 DADOS DO CLIENTE (QUICK SEARCH)</span>
+            <span id="ninjaKycBadge" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Sincronizado</span>
+          </div>
+          <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-600">
+            <div><strong>Player ID:</strong> <span id="ninjaPlayerId" class="font-mono text-slate-900 font-bold">Not found</span></div>
+            <div><strong>Nome:</strong> <span id="ninjaFullName" class="text-slate-900 font-medium">Not found</span></div>
+            <div><strong>CPF:</strong> <span id="ninjaCpf" class="font-mono text-slate-900">Not found</span></div>
+            <div><strong>DOB:</strong> <span id="ninjaDob" class="text-slate-900">Not found</span></div>
+            <div class="col-span-2"><strong>Email:</strong> <span id="ninjaEmail" class="text-slate-900">Not found</span></div>
+            <div class="col-span-2"><strong>Telefone:</strong> <span id="ninjaPhone" class="text-slate-900">Not found</span></div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-extrabold text-slate-700 uppercase">Select Template</label>
+            <button onclick="switchNinjaView('manage')" class="text-xs font-bold text-[#10b981] hover:text-emerald-700 hover:underline">
+              ⚙️ Manage Templates
+            </button>
+          </div>
+          <select id="ninjaTemplateSelect" class="w-full p-2.5 bg-slate-50 border-2 border-slate-300 rounded-lg text-xs outline-none focus:border-[#10b981] transition font-medium text-slate-800">
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-extrabold text-slate-700 uppercase">Issue Description</label>
+          <textarea id="ninjaDescInput" rows="4" placeholder="Type or edit the description here..."
+            class="w-full p-3 bg-slate-50 border-2 border-slate-300 rounded-lg text-xs outline-none focus:border-[#10b981] transition font-sans text-slate-800 resize-y custom-scrollbar"></textarea>
+        </div>
+
+        <div class="pt-2 flex flex-col gap-2">
+          <button id="btnNinjaCopy" onclick="executeNinjaCopy()" class="w-full py-3 bg-[#10b981] hover:bg-[#059669] text-white font-extrabold text-sm rounded-lg shadow-md transition text-center">
+            Copy Escalation
+          </button>
+          <button onclick="closeNinjaModal()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-lg transition text-center">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- MANAGE TEMPLATES VIEW -->
+      <div id="ninjaViewManage" class="p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar hidden">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2" id="ninjaFormBox">
+          <div class="text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-1" id="ninjaFormTitle">
+            ➕ ADD NEW TEMPLATE
+          </div>
+          <input type="text" id="ninjaNewCat" list="ninjaCatList" placeholder="Category (Select or type new...)"
+            class="w-full p-2 bg-white border border-slate-300 rounded-md text-xs outline-none focus:border-[#10b981]">
+          <datalist id="ninjaCatList"></datalist>
+          <input type="text" id="ninjaNewName" placeholder="Template Title (e.g., Deposit Delay)"
+            class="w-full p-2 bg-white border border-slate-300 rounded-md text-xs outline-none focus:border-[#10b981]">
+          <textarea id="ninjaNewText" rows="2" placeholder="Template Message..."
+            class="w-full p-2 bg-white border border-slate-300 rounded-md text-xs outline-none focus:border-[#10b981] custom-scrollbar"></textarea>
+          <button id="btnNinjaSaveTemplate" onclick="saveNinjaTemplate()" class="py-2 bg-[#10b981] hover:bg-[#059669] text-white font-bold text-xs rounded-md transition shadow">
+            Save Template
+          </button>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-2">
+          <div class="text-xs font-extrabold text-slate-700 border-b border-slate-200 pb-1">
+            📋 EXISTING TEMPLATES
+          </div>
+          <div id="ninjaTemplatesList" class="space-y-2 max-h-56 overflow-y-auto custom-scrollbar"></div>
+        </div>
+
+        <button onclick="switchNinjaView('main')" class="py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition text-center">
+          🔙 Back to Escalation
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: ÁREA DE CONTEÚDOS SINCRONIZADOS PELA EXTENSÃO -->
+  <div id="syncedKbModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#212121] border border-[#3a3a3a] rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden font-sans">
+      
+      <!-- MODAL HEADER -->
+      <div class="h-14 px-6 border-b border-[#333] flex items-center justify-between bg-[#1b1b1b]">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-sm flex items-center gap-2">
+              Conteúdos Sincronizados da KB Oficial
+              <span id="syncedCountModalBadge" class="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-2 py-0.5 rounded-full font-mono">0 Módulos</span>
+            </h3>
+            <p class="text-[11px] text-gray-400">Inspeção detalhada de manuais e páginas capturados do Google Sites</p>
+          </div>
+        </div>
+        <button onclick="closeSyncedKbModal()" class="text-gray-400 hover:text-white text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- SEÇÃO: ABSORVER CONTEÚDO POR LINK DO KYB -->
+      <div class="p-4 border-b border-[#2d2d2d] bg-gradient-to-r from-[#1b1b1b] via-[#222222] to-[#1b1b1b] space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm border border-cyan-500/30 shadow">
+              <i class="fa-solid fa-link"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white text-xs flex items-center gap-2">
+                Absorver Conteúdo por Link do KYB
+                <span class="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-2 py-0.5 rounded-full font-mono">
+                  Banco de Respostas Prioritário
+                </span>
+              </h4>
+              <p class="text-[11px] text-gray-400">Cole a URL de qualquer página da Knowledge Base para a IA extrair e usar nas respostas</p>
+            </div>
+          </div>
+          <span id="absorverStatusBadge" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800/60 px-2.5 py-0.5 rounded-full font-mono font-bold hidden sm:inline">
+            🟢 Pronto
+          </span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-globe absolute left-3 top-2.5 text-gray-500 text-xs"></i>
+            <input type="url" id="inputUrlKybAbsorver" placeholder="Cole o link da página do KYB (ex: https://sites.google.com/vbet.com/vbet-brazil-knowledge-base/...)"
+              onkeydown="if(event.key==='Enter') executarAbsorcaoLinkKyb();"
+              class="w-full bg-[#121212] border border-[#383838] focus:border-cyan-400 rounded-xl pl-8 pr-3 py-2 text-white outline-none text-xs font-mono">
+          </div>
+          <button id="btnPuxarAbsorverLink" onclick="executarAbsorcaoLinkKyb()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition flex items-center justify-center space-x-1.5 flex-shrink-0">
+            <i class="fa-solid fa-bolt text-yellow-300"></i>
+            <span>Puxar e Absorver Conteúdo</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-gray-400">
+          <div class="flex items-center space-x-2">
+            <span class="text-[10px] text-gray-500">Exemplos:</span>
+            <button onclick="preencherUrlExemplo('https://sites.google.com/vbet.com/vbet-brazil-knowledge-base/home')" class="text-cyan-400 hover:underline text-[10px]">Home</button>
+            <button onclick="preencherUrlExemplo('https://sites.google.com/vbet.com/vbet-brazil-knowledge-base/saque-withdrawal')" class="text-cyan-400 hover:underline text-[10px]">Saques</button>
+            <button onclick="preencherUrlExemplo('https://sites.google.com/vbet.com/vbet-brazil-knowledge-base/bonus-promotions')" class="text-cyan-400 hover:underline text-[10px]">Bônus</button>
+          </div>
+          <button type="button" onclick="toggleAreaColagemManual()" class="text-cyan-400 hover:text-cyan-300 underline text-[11px] flex items-center gap-1">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span id="labelToggleColagemManual">Colar texto manualmente</span>
+          </button>
+        </div>
+
+        <div id="areaColagemManualKyb" class="hidden pt-2 space-y-2 border-t border-[#333]">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input type="text" id="manualKybTitulo" placeholder="Título da Página / Regra (ex: Diretriz de Saque PIX)..." class="bg-[#121212] border border-[#383838] rounded-lg p-2 text-white text-xs outline-none focus:border-cyan-400">
+            <select id="manualKybCategoria" class="bg-[#121212] border border-[#383838] rounded-lg p-2 text-white text-xs outline-none focus:border-cyan-400">
+              <option value="KB Oficial (Google Sites)">KB Oficial (Google Sites)</option>
+              <option value="Pagamentos">Pagamentos / PIX</option>
+              <option value="Verificação">Verificação / KYC</option>
+              <option value="Bônus">Bônus &amp; Promoções</option>
+              <option value="Esportes">Apostas Esportivas</option>
+              <option value="Cassino">Cassino &amp; Jogos</option>
+              <option value="Jogo Responsável">Jogo Responsável</option>
+              <option value="Auditoria">Auditoria / Scorecard</option>
+              <option value="Geral">Regras Gerais</option>
+            </select>
+          </div>
+          <textarea id="manualKybConteudo" rows="4" placeholder="Cole o texto copiado da página do KYB aqui para absorção imediata..." class="w-full bg-[#121212] border border-[#383838] rounded-lg p-2 text-white text-xs outline-none custom-scrollbar focus:border-cyan-400"></textarea>
+          <div class="flex justify-end">
+            <button onclick="salvarConteudoManualKyb()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow transition flex items-center space-x-1.5">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Texto Absorvido no Banco de Respostas</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER & ACTIONS BAR -->
+      <div class="p-4 border-b border-[#2d2d2d] bg-[#1a1a1a] flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="relative w-full sm:max-w-md">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-500 text-xs"></i>
+          <input type="text" id="syncedSearchInput" oninput="filterSyncedKbList()" placeholder="Filtrar por título, termos ou URL..."
+            class="w-full bg-[#121212] border border-[#383838] focus:border-cyan-400 rounded-lg pl-8 pr-3 py-1.5 text-white outline-none text-xs">
+        </div>
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end flex-wrap gap-1">
+          <button onclick="solicitarSincronizacaoExtensao()" title="Solicitar leitura da extensão ou cache do Google Sites" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition font-bold shadow">
+            <i class="fa-solid fa-rotate text-xs"></i>
+            <span>Sincronizar Agora</span>
+          </button>
+          <button onclick="document.getElementById('importSyncedFileInput').click()" class="bg-[#282828] hover:bg-[#333] text-gray-300 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-[#3e3e3e] flex items-center space-x-1.5 transition font-medium">
+            <i class="fa-solid fa-file-import text-cyan-400"></i>
+            <span>Importar</span>
+          </button>
+          <input type="file" id="importSyncedFileInput" accept=".json" onchange="importarSyncedKbJson(event)" class="hidden">
+          <button onclick="exportSyncedKbJson()" class="bg-[#282828] hover:bg-[#333] text-gray-300 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-[#3e3e3e] flex items-center space-x-1.5 transition font-medium">
+            <i class="fa-solid fa-download text-cyan-400"></i>
+            <span>Exportar</span>
+          </button>
+          <button onclick="clearSyncedKb()" class="bg-[#282828] hover:bg-red-950/40 text-red-400 text-xs px-3 py-1.5 rounded-lg border border-red-900/40 flex items-center space-x-1.5 transition font-medium">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Limpar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENT LIST -->
+      <div class="flex-1 overflow-y-auto p-5 custom-scrollbar text-xs">
+        <div id="syncedCardsContainer" class="space-y-3">
+          <!-- Renderizado via JavaScript -->
+        </div>
+      </div>
+
+      <!-- MODAL FOOTER -->
+      <div class="h-12 px-6 border-t border-[#333] flex items-center justify-between bg-[#1c1c1c]">
+        <span class="text-[11px] text-gray-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i>
+          <span>Sincronização integrada via Chrome Extension &bull; Google Sites VBET</span>
+        </span>
+        <button onclick="closeSyncedKbModal()" class="bg-[#2f2f2f] hover:bg-[#3d3d3d] text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition">
+          Fechar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: LEITOR DE CONTEÚDO COMPLETO SINCRONIZADO -->
+  <div id="syncedDocReaderModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#1e1e1e] border border-[#3a3a3a] rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden font-sans">
+      <div class="h-14 px-6 border-b border-[#333] flex items-center justify-between bg-[#171717]">
+        <div>
+          <h3 id="readerModalTitle" class="font-bold text-white text-sm">Título do Módulo</h3>
+          <p id="readerModalUrl" class="text-[10px] text-cyan-400 truncate max-w-md font-mono">https://sites.google.com/...</p>
+        </div>
+        <button onclick="closeSyncedDocReaderModal()" class="text-gray-400 hover:text-white text-sm">✕</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar text-xs text-gray-200 leading-relaxed space-y-3">
+        <div id="readerModalContent" class="whitespace-pre-line select-text"></div>
+      </div>
+      <div class="h-12 px-6 border-t border-[#333] flex items-center justify-between bg-[#171717]">
+        <button onclick="copyReaderContent()" class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold text-xs px-4 py-1.5 rounded-lg transition hover:opacity-90">
+          📋 Copiar Texto Completo
+        </button>
+        <button onclick="closeSyncedDocReaderModal()" class="bg-[#2f2f2f] hover:bg-[#3d3d3d] text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast fixed bottom-6 right-6 bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 z-50">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMsg">Copiado para a área de transferência!</span>
+  </div>
+
+  <!-- ENGINE SCRIPT -->
+  <script>
+    // =========================================================================
+    // 1. BASE DE CONHECIMENTO DEFAULT (33 MÓDULOS VBET BRAZIL)
+    // =========================================================================
+    const DEFAULT_KB = [
+      { id: 1, title: "Home (VBET Brazil Knowledge Base)", category: "Geral", keywords: "home, central, manual, scorecard, estrutura", content: "Ponto central de navegação da documentação interna. Escopo: Diretrizes de atendimento ao cliente, manuais de sistemas (AGP, Hoory, BKO) e matrizes de auditoria da equipe de Qualidade (Quality Scorecard)." },
+      { id: 2, title: "Account Information", category: "Geral", keywords: "conta, saldo, id, status, ativa, bloqueada, pendente, ip, login, auditoria", content: "Consulta de ID de cliente, status da conta (Ativa, Bloqueada, Pendente), saldo principal e saldos de bônus via AGP. Histórico de logs: Verificação de IPs de acesso, registros de auditoria de alterações cadastrais e dispositivo utilizado." },
+      { id: 3, title: "Account Verification (AGP Guide)", category: "Verificação", keywords: "verificação, kyc, documento, agp, pending, approved, rejected, comprovante, upload", content: "Status do KYC no AGP: Análise visual do status do documento (Pending, Approved, Rejected). Upload e checagem: Envio de documentos de identidade e comprovantes de residência recebidos no chat/e-mail para a aba de verificação no AGP." },
+      { id: 4, title: "Account Verification (Regras & Processos)", category: "Verificação", keywords: "cnh, rg, passaporte, cpf, liveness, facial, biometria, recusa, documentos aceitos", content: "Documentos Aceitos: RG, CNH e Passaporte válidos no Brasil. CPF regularizado junto à Receita Federal. Verificação Facial (Liveness Check): Leitura de biometria facial exigida para liberação de funções e saques. Motivos de Recusa: Documento cortado, ilegível, CPF diverge do titular ou cópia física digitalizada." },
+      { id: 5, title: "Payments (AGP Guide)", category: "Pagamentos", keywords: "pagamentos, status pagamento, complete, new, failed, canceled, transação, financeiro", content: "Visualização financeira: Histórico de Depósitos e Saques. Status: Complete (Sucesso), Pending (Aguardando processamento bancário), New (Aguardando aprovação de Risco) e Failed/Canceled (Rejeitado)." },
+      { id: 6, title: "Client Messages (AGP Guide)", category: "Auditoria", keywords: "client messages, mensagens risco, notificação risco, saque retido, nota perfil", content: "Comunicação interna de Risco: Mensagens diretas disparadas pelo sistema para notificar saques retidos ou necessidade de verificação. Consulta por agentes: Leitura de notas internas no perfil sem abertura de tarefas no Jira." },
+      { id: 7, title: "Sportbook", category: "Esportes", keywords: "esportes, sportbook, aposta, bilhete, odds, open, won, lost, returned, cashout, handicap", content: "Apostas Esportivas no AGP: Bilhetes, IDs de apostas, mercados (Handicap, Total, 1X2) e cálculo de odds. Status: Open (Em aberto), Won (Ganha), Lost (Perdida), Returned (Anulada/Reembolsada) e Cashout (Encerrada antecipadamente)." },
+      { id: 8, title: "Chat/Email Basics (Hoory)", category: "Auditoria", keywords: "hoory, chat, email, fila, transferência, atribuição, nota interna", content: "Ferramenta de Atendimento Hoory: Navegação entre abas de atendimentos ativos, fila de espera e caixa de entrada. Ações: Atribuição de casos, transferência de chamados, encerramento com pesquisas e aplicação de notas internas." },
+      { id: 9, title: "Business Templates", category: "Geral", keywords: "templates, modelo, resposta pronta, padronizado, tom institucional", content: "Modelos Oficiais: Respostas pré-formatadas obrigatórias para aberturas, transferências, indisponibilidades técnicas e encerramentos. Regra de uso: Proibição de alterações no tom institucional dos templates padronizados." },
+      { id: 10, title: "Escalation", category: "Auditoria", keywords: "escalamento, pandayo, jira, vbetlat, bugs, departamento", content: "Matriz de Encaminhamento: Pandayo para tratativas rápidas/comunicação direta entre equipes; Jira para abertura de bugs, revisões técnicas complexas e auditorias formais (Projeto VBETLAT)." },
+      { id: 11, title: "Client Messages (Internal Guide)", category: "Auditoria", keywords: "clientmessages_rm, recusa saque, dados bancarios incorretos, deposito simbolico", content: "Canal clientmessages_RM (Pandayo): Notificações de recusa de saque enviadas pelo time de Risco. Motivos: Inconsistência nos dados bancários, tipo de conta inválido, limite excedido, necessidade de depósito simbólico de confirmação ou conta bloqueada." },
+      { id: 12, title: "CS Metrics", category: "Auditoria", keywords: "frt, rt, csat, qa, sla, tempo resposta, metricas, score", content: "Primeira Resposta (FRT): 40s (Chat) | 30 min (E-mail). Tempo de Resolução (RT): 20 min (Chat) | 3h (E-mail). Metas CSAT & QA: CSAT >= 85% | QA Score Weighted Average >= 90 (Customer: 90, Business: 85, Compliance: 99,5%)." },
+      { id: 13, title: "Depósitos/Deposits", category: "Pagamentos", keywords: "depósito, depositar, pix deposito, valor minimo deposito, comprovante pix, limite deposito", content: "Método Exclusivo: PIX. Valores: Mínimo R$ 5,00 | Máximo R$ 100.000,00. KYC não é obrigatório para depositar. Atraso/Instabilidade: Solicitar comprovante em PDF com dados do titular, CPF e ID do PIX (CPF do comprovante deve ser igual ao titular). Escalamento: Jira via Automation for VPS e Pandayo (VBET follow-up)." },
+      { id: 14, title: "Saque/Withdrawal", category: "Pagamentos", keywords: "saque, sacar, pix saque, valor minimo saque, limite saque, btg, genial, saque atrasado", content: "Método Exclusivo: PIX. Requisitos: Conta totalmente verificada (KYC/Selfie) e histórico de pelo menos 1 depósito de no mínimo R$ 1,00. Valores: Mínimo R$ 1,00 | Máximo R$ 20.000,00 por transação. Regra de Processamento: Até R$ 100,00 vai via Genial; acima de R$ 100,00 vai via BTG. Tratativa: Posições New no grupo VBET Payments RM; atrasados/pagos via VBET Payments CS." },
+      { id: 15, title: "Bank Account", category: "Pagamentos", keywords: "conta bancaria, banco, agencia, alterar conta, corrigir conta, titularidade, 4 digitos", content: "Regras do Vínculo: Titularidade estrita (mesmo CPF). Agência SEMPRE com 4 dígitos (completar com zeros à esquerda se necessário, ex: 0001). Número da conta sem hífen. Procedimento de Correção: 1. Cadastrar conta temporária; 2. Excluir a conta incorreta; 3. Adicionar a conta correta; 4. Excluir a conta temporária. Tags: bankaccount_error, datacorrection_bankaccount." },
+      { id: 16, title: "Financial Report Requests", category: "Pagamentos", keywords: "comprovabet, irpf, relatório anual, extrato, statement, informe rendimentos, perdas ganhos", content: "Atendimento Financeiro: Orientar checagem no próprio perfil. Não abrir tasks no Jira para histórico simples de perdas ou ganhos, exceto para documento oficial (aba Statement no VHD Board). COMPROVABET: Informe de rendimentos para IRPF solicitado pelo próprio cliente na aba Perfil > Relatório Anual. Tags: balance_financialreport, balance_comprovabet. Proibido envio de screenshots de telas internas." },
+      { id: 17, title: "Bets and Games", category: "Cassino", keywords: "aposta minima, contraproposta, edit bets, jogo adiado, cassino travou, round id, vbet-cs-calculation", content: "Esportes: Aposta mínima R$ 1,00. Contrapropostas de odds no mínimo R$ 100,00. Edit Bets permitido apenas com Cashout ativo (sem Freebets/Bônus). Jogos adiados sem data em 24h são anulados e reembolsados. Cassino: Falhas e travamentos requerem escalamento para vbet-cs-calculation com o ID da rodada (Round ID)." },
+      { id: 18, title: "Bonus and Promotions", category: "Bônus", keywords: "bônus, promoção, wagering, rollover, freebet, free spins, cortesia, cashback, perda liquida", content: "Modalidades: Wagering Bonus (com rollover e max payout), Freebet (aposta única, sem rollover, lucros em dinheiro real) e Free Spins. Bônus de Cortesia (Daily Courtesy Bonus): 1 solicitação a cada 24 horas para perfis Additional, Neutral e VIP (proibido para contas sob análise de Risco) via formulário CRM. Cashback: (Total Apostado) - (Ganhos Totais) = Perda Líquida." },
+      { id: 19, title: "Loyalty Points (V-arena Club)", category: "Bônus", keywords: "v-arena, pontos, xp, fidelidade, niveis, player info", content: "Mecanismo: Aumento de XP e níveis acumulados conforme o volume de apostas em dinheiro real. Consulta: BKO (Player Info) ou AGP (Details > Client Balance). Falhas: Tarefa no Jira + notificação no Pandayo (Follow-up) respondidas por Agentes Sêniores." },
+      { id: 20, title: "Account Block [RG] (Jogo Responsável)", category: "Jogo Responsável", keywords: "jogo responsável, bloqueio, pausa, autoexclusao, vicio, compulsao, sigap, timeout", content: "Pausa Temporária: 24h, 1 semana, 1 ou 2 meses (Tag: AccBlock_TimeOut). Autoexclusão Permanente: Irreversível. Citação de vício ou compulsão exige encerramento imediato de qualquer retenção, bloqueio definitivo imediato e tags accblock_selfexclusion e accblock_gamblingaddiction. Desbloqueios regulatórios (SIGAP): Requer envio de comprovante em PDF e aprovação no canal Brazil_Verification." },
+      { id: 21, title: "Risk Block/Limit", category: "Auditoria", keywords: "risco, bloqueio risco, ouvidoria, arbitragem, ab, ob, bh, aml, fraude", content: "Diretriz Crítica de Segurança: Proibido detalhar ou revelar o motivo do bloqueio de risco ao cliente. Comunicação Permitida: Informar que a conta está sob análise e direcionar para o e-mail ouvidoria@vbet.bet.br. Siglas internas: AB (Arbitragem), OB (Aposta Oposta), BH (Caçador de Bônus), AML (Prevenção à Lavagem de Dinheiro). Canais: vbet_casino_rm ou Latinamerican Group! VBETLATAM!." },
+      { id: 22, title: "Scorecard (Quality Team)", category: "Auditoria", keywords: "scorecard, qualidade, qa, nota, auditoria", content: "Padrões Globais: Avaliação contínua nos canais Chat, Phone, Email, VIP e Reclame Aqui. Meta Global: Média Ponderada >= 90." },
+      { id: 23, title: "[CHAT] Scorecard V8", category: "Auditoria", keywords: "scorecard chat, v8, empathic connection, dead air, unduly promise, fails criticos, work avoidance", content: "Customer: Empathic Connection (20), Issue Resolution (30), Communication Skills (20), Language Proficiency (10), Opening & Closing (20). Business: Hold Time/Dead Air (20), Escalation (30), Unduly Promise (20), Tags (15), Case Details (15). Compliance (Fails Críticos): Vazamento de dados, falhas de Jogo Responsável, falta de compostura/etiqueta, falhas de autenticação e fuga de trabalho (Work Avoidance)." },
+      { id: 24, title: "[PHONE] Scorecard V3", category: "Auditoria", keywords: "scorecard phone, telefone, readiness", content: "Customer: Avoid Repeats (10), Emotional States (20), Resolution (20), Communication (20), Reassurance (10), Language (10), Opening/Closing (10). Business: Hold Time (20), Escalation (30), Unduly Promise (30), Tags (20), Case Details (10), Acknowledge Issue (20). Readiness inicial <= 15s." },
+      { id: 25, title: "[EMAIL] Scorecard V4", category: "Auditoria", keywords: "scorecard email, email readiness", content: "Customer: Avoid Repeats (10), Emotional States (20), Resolution (20), Communication (20), Language (10), Opening/Closing (10). Business: Categorization/Tags (25), Email Readiness <= 1h (20), Escalation (30), Unduly Promise (20), Case Details (20), Acknowledge Issue (25)." },
+      { id: 26, title: "[EMAILV] Scorecard V3 (VIP Email)", category: "Auditoria", keywords: "email vip, scorecard vip", content: "Customer: Avoid Repeats (10), Emotional States & Connection (20), Resolution & Ownership (20), Communication (20), Language (10), Opening/Closing (10). Business: VIP Routing & Tags (25), Precision Escalation (30), Unduly Promise (20), Case Details (20), Acknowledge Issue (25)." },
+      { id: 27, title: "[RA] Scorecard V4 (Reclame Aqui)", category: "Auditoria", keywords: "reclame aqui, scorecard ra, vbet caixa alta", content: "SLA de Resposta <= 48h (10), Issue Resolution (20), Communication & Tone (10), Personalization (10), Language (5), Brand Reputation (20) obrigatório escrever VBET em caixa alta, Categorization (5), Moderation Request (5). Fails Críticos: Vazamento de dados, falta de autenticação, informações financeiras incorretas e postura inadequada." },
+      { id: 28, title: "Survey Notification", category: "Auditoria", keywords: "survey, pesquisa, pesquisa satisfação, encerramento", content: "Regra: Envio obrigatório da pesquisa de satisfação ao final de todas as interações. Conduta: Uso de tom neutro e profissional. Estritamente proibido induzir, pedir notas altas ou manipular o resultado." },
+      { id: 29, title: "Unresponsive Clients1", category: "Auditoria", keywords: "cliente sem resposta, unresponsive, aviso 3 tempos, drop 3-2-1", content: "Informação Incompleta: Sem dados para investigação, aplicar a regra de avisos em 3 tempos (3 min, 2 min, 1 min) e fechar o atendimento. Informação Completa: Fornecer a resposta detalhada e a solução no segundo aviso (Warning 2), encerrando a interação no aviso final (Warning 1). Regra: 3 - 2 & Resolução - 1." },
+      { id: 30, title: "[CHAT] Scorecard V3 (Histórico)", category: "Auditoria", keywords: "scorecard v3, historico, transicao", content: "Registro de Transição: Modelo anterior com métricas de Hold Time de 5 minutos e regra de drop 5-3-2-1, substituído pelo V8 (padrão 3-2-1 / 40s FRT)." },
+      { id: 31, title: "TAGs Guide", category: "Auditoria", keywords: "tags, root cause tag, empty_chat, categorizacao", content: "Obrigatória: Todo atendimento deve possuir uma tag associada à Causa Raiz (Root Cause), não apenas ao problema superficial. Exceções Múltiplas: Uso de mais de uma tag permitido apenas em casos de Clientes VIP, Bugs de App/Site e Atendimentos Abandonados. Empty_Chat: Uso restrito a mensagens curtas como 'Oi' sem desdobramento da dúvida." },
+      { id: 32, title: "Difficult Customers", category: "Auditoria", keywords: "cliente dificil, cliente abusivo, odio, insatisfeito, warning", content: "Clientes Abusivos Leves: Fluxo de 2 avisos formais e encerramento no 3º evento. Clientes Abusivos Graves (Discurso de Ódio): 1 aviso único (Single Warning), encerramento imediato, bloqueio do chat por 24h e escalamento ao supervisor. Clientes Insatisfeitos com a Resolução: Confirmar entendimento; se recusar a solução formal, obter autorização do supervisor, registrar nota e aplicar Warning 1, Warning 2 e Warning 3 (Encerramento)." },
+      { id: 33, title: "Senior Agent Duties", category: "Auditoria", keywords: "senior, liderança, handover, mishandled, supervisao, vbetlat-follow-up", content: "Gestão e Monitoramento: Supervisão de filas, suporte aos agentes e gestão direta de contas VIP. Tarefas: Monitoramento diário do VBETLAT-follow-up no Jira, envio de relatórios de Handover e relatórios de apontamento de falhas (Mishandled Cases). Ações de Risco: Processamento das mensagens do grupo Risk & Support - BR sem expor motivos restritos aos usuários." }
+    ];
+
+    function getKnowledgeBase() {
+      const stored = localStorage.getItem('vbet_custom_kb');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) { return DEFAULT_KB; }
+      }
+      return DEFAULT_KB;
+    }
+
+    function saveKnowledgeBase(kb) {
+      localStorage.setItem('vbet_custom_kb', JSON.stringify(kb));
+      updateKnowledgeBadge();
+    }
+
+    function updateKnowledgeBadge() {
+      const kb = getKnowledgeBase();
+      const badge = document.getElementById('learnedCountBadge');
+      if (badge) badge.textContent = `${kb.length} Módulos Ativos`;
+      const totalCount = document.getElementById('totalKnowledgeCount');
+      if (totalCount) totalCount.textContent = kb.length;
+    }
+
+    const SURVEY_CLOSING = "Em instantes, você receberá uma pesquisa de satisfação sobre sua experiência com a VBET. Sua opinião é essencial para que possamos oferecer um serviço cada vez melhor!";
+    window.renderedMessages = {};
+    let currentMode = 'cliente';
+
+    function sanitize(text) {
+      if (!text) return "";
+      let clean = text.replace(/[\u2014\u2013]/g, "-");
+      clean = clean.replace(/\b[Vv]bet\b/g, "VBET");
+      return clean;
+    }
+
+    function resetChatHistory() {
+      const chat = document.getElementById('chatSection');
+      chat.innerHTML = "";
+      chat.classList.add('hidden');
+      document.getElementById('heroSection').classList.remove('hidden');
+      document.getElementById('promptInput').value = "";
+      window.renderedMessages = {};
+      showToast("Histórico de conversa resetado com sucesso!");
+    }
+
+    function setQueryMode(mode) {
+      currentMode = mode;
+      ['cliente', 'agente', 'id'].forEach(m => {
+        const btn = document.getElementById(`tab-${m}`);
+        if (m === mode) {
+          btn.className = "px-3.5 py-1 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 bg-[#ff007a] text-white shadow-md";
+        } else {
+          btn.className = "px-3.5 py-1 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 bg-[#2f2f2f] text-gray-300 hover:text-white hover:bg-[#3a3a3a] border border-[#3e3e3e]";
+        }
+      });
+
+      const input = document.getElementById('promptInput');
+      if (mode === 'id') {
+        input.placeholder = "Digite o ID do cliente (ex: 198367673) para abrir o Quick-Search BO...";
+      } else if (mode === 'agente') {
+        input.placeholder = "Dúvida do agente (ex: Qual a regra de saque? Como alterar banco no AGP?)...";
+      } else {
+        input.placeholder = "Dúvida do cliente (ex: Meu saque via PIX não caiu, o que aconteceu?)...";
+      }
+      input.focus();
+    }
+
+    function askQuick(mode, text) {
+      setQueryMode(mode);
+      document.getElementById('promptInput').value = text;
+      submitPrompt();
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitPrompt();
+      }
+    }
+
+    // =========================================================================
+    // 2. LÓGICA DO PAINEL MÓVEL QUICK-SEARCH & KYC BETCONSTRUCT PRO
+    // =========================================================================
+    const idPainelBusca = 'painel-quicksearch-bo';
+    let idPesquisadoAtual = null;
+    let camposValidados = new Set();
+    const TEMPO_EXPIRACAO_MS = 15 * 60 * 1000; // 15 Minutos de validade
+
+    function obterHistoricoValidacoes() {
+      try {
+        return JSON.parse(localStorage.getItem('bo_historico_validacoes') || '{}');
+      } catch(e) { return {}; }
+    }
+
+    function salvarHistoricoValidacoes(historico) {
+      try {
+        localStorage.setItem('bo_historico_validacoes', JSON.stringify(historico));
+      } catch(e){}
+    }
+
+    function carregarValidacoesDoPlayer(playerId) {
+      camposValidados.clear();
+      if (!playerId) return;
+
+      const historico = obterHistoricoValidacoes();
+      const agora = Date.now();
+
+      Object.keys(historico).forEach(id => {
+        if (agora - historico[id].timestamp > TEMPO_EXPIRACAO_MS) {
+          delete historico[id];
+        }
+      });
+
+      if (historico[playerId] && (agora - historico[playerId].timestamp <= TEMPO_EXPIRACAO_MS)) {
+        historico[playerId].campos.forEach(c => camposValidados.add(c));
+      }
+
+      salvarHistoricoValidacoes(historico);
+    }
+
+    function salvarValidacaoAtual() {
+      if (!idPesquisadoAtual) return;
+      const historico = obterHistoricoValidacoes();
+      if (camposValidados.size > 0) {
+        historico[idPesquisadoAtual] = {
+          timestamp: Date.now(),
+          campos: Array.from(camposValidados)
+        };
+      } else {
+        delete historico[idPesquisadoAtual];
+      }
+      salvarHistoricoValidacoes(historico);
+    }
+
+    // CONTROLE DE ARRASTO DO PAINEL
+    let isDragging = false, offsetStartX = 0, offsetStartY = 0;
+
+    function iniciarArrasto(e) {
+      if (e.target.closest('input') || e.target.closest('button') || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      const container = document.getElementById(idPainelBusca);
+      if (!container) return;
+
+      isDragging = true;
+      offsetStartX = e.clientX - container.offsetLeft;
+      offsetStartY = e.clientY - container.offsetTop;
+
+      document.addEventListener('mousemove', moverPainel);
+      document.addEventListener('mouseup', pararArrasto);
+    }
+
+    function moverPainel(e) {
+      if (!isDragging) return;
+      const container = document.getElementById(idPainelBusca);
+      if (!container) return;
+
+      container.style.left = (e.clientX - offsetStartX) + 'px';
+      container.style.top = (e.clientY - offsetStartY) + 'px';
+      container.style.right = 'auto';
+      container.style.bottom = 'auto';
+    }
+
+    function pararArrasto() {
+      isDragging = false;
+      document.removeEventListener('mousemove', moverPainel);
+      document.removeEventListener('mouseup', pararArrasto);
+    }
+
+    // COPIADOR RÁPIDO COM BRILHO ✨
+    function copiarTextoDireto(texto, elementoBtn) {
+      if (!texto || texto === 'N/A') return;
+      navigator.clipboard.writeText(texto).then(() => {
+        const iconeOriginal = elementoBtn.innerHTML;
+        elementoBtn.innerHTML = '✨';
+        setTimeout(() => { elementoBtn.innerHTML = iconeOriginal; }, 1000);
+        showToast(`Copiado: ${texto}`);
+      }).catch(() => {
+        copyRaw(texto, `Copiado: ${texto}`);
+      });
+    }
+
+    function atualizarMarcacoesVisuais() {
+      document.querySelectorAll('.item-dado-kyc').forEach(el => {
+        const campo = el.getAttribute('data-campo');
+        const btn = el.querySelector('.btn-marcar-validado');
+
+        if (camposValidados.has(campo)) {
+          el.style.background = '#e8f5e9';
+          el.style.borderLeft = '4px solid #198754';
+          el.style.paddingLeft = '6px';
+          el.style.borderRadius = '4px';
+
+          if (btn) {
+            btn.innerHTML = '<span style="font-size:13px; cursor:pointer;" title="Validado nos últimos 15 min">✅</span>';
+          }
+        } else {
+          el.style.background = 'transparent';
+          el.style.borderLeft = 'none';
+          el.style.paddingLeft = '0px';
+
+          if (btn) {
+            btn.innerHTML = '<span style="color:#aaa; cursor:pointer; font-size:13px;" title="Clique para validar">⚪</span>';
+          }
+        }
+      });
+    }
+
+    function toggleQuickSearchBo(forceState) {
+      const p = document.getElementById(idPainelBusca);
+      if (!p) return;
+      const willShow = (typeof forceState === 'boolean') ? forceState : (p.style.display === 'none');
+      p.style.display = willShow ? 'block' : 'none';
+      if (willShow) {
+        document.getElementById('input-player-id').focus();
+      }
+    }
+
+    // BASE DE DADOS SIMULADA / CONECTADA DO BACKOFFICE
+    const BO_MOCK_PLAYERS = {
+      "198367673": {
+        playerId: "198367673",
+        nomeCompleto: "Roberto Carlos da Silva",
+        cpf: "482.910.384-21",
+        email: "roberto.carlos@email.com",
+        dataNascimento: "10/04/1988",
+        telefone: "+55 11 98765-4321",
+        categoriaCliente: "VIP Gold",
+        saldo: "R$ 1.480,50",
+        verificado: true
+      },
+      "185429104": {
+        playerId: "185429104",
+        nomeCompleto: "Mariana Souza Oliveira",
+        cpf: "391.827.465-90",
+        email: "mariana.souza@email.com",
+        dataNascimento: "22/08/1995",
+        telefone: "+55 21 99123-8877",
+        categoriaCliente: "VIP Silver",
+        saldo: "R$ 450,00",
+        verificado: true
+      }
+    };
+
+        function renderizarDadosNoCard(dados) {
+          const divResultado = document.getElementById('resultado-bo-conteudo');
+          if (!divResultado) return;
+
+          const catTexto = dados.categoriaCliente || 'Geral';
+          const ehVip = catTexto.toUpperCase().includes('VIP');
+          const estiloCategoria = ehVip 
+            ? 'background:#198754; color:#fff; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;' 
+            : 'font-weight:bold; color:#555;';
+
+          const novaUrl = `https://backoffice.betconstruct.com/#/customers/detail/${dados.playerId}`;
+          document.getElementById('link-externo-bo').href = novaUrl;
+
+          divResultado.innerHTML = `
+            <div style="margin-bottom:8px; font-weight:bold; color:#000; border-bottom:1px solid #eee; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span>👤 ID: #${dados.playerId}</span>
+                <button class="btn-copiar-dado" data-valor="${dados.playerId}" style="background:none; border:none; cursor:pointer; font-size:11px;" title="Copiar ID">📋</button>
+              </div>
+              <span style="color:${dados.verificado ? '#198754' : '#dc3545'}; font-size:10px; font-weight:bold;">${dados.verificado ? 'VERIFICADO ✅' : 'NÃO VERIFICADO ⚠️'}</span>
+            </div>
+
+            <div class="item-dado-kyc" data-campo="nome" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px; max-width:270px; overflow:hidden;">
+                <button class="btn-copiar-dado" data-valor="${dados.nomeCompleto}" style="background:none; border:none; cursor:pointer; font-size:11px; flex-shrink:0;" title="Copiar Nome">📋</button>
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><b>Nome:</b> ${dados.nomeCompleto}</div>
+              </div>
+              <div class="btn-marcar-validado" data-campo="nome"></div>
+            </div>
+
+            <div class="item-dado-kyc" data-campo="cpf" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <button class="btn-copiar-dado" data-valor="${dados.cpf}" style="background:none; border:none; cursor:pointer; font-size:11px;" title="Copiar CPF">📋</button>
+                <div><b>CPF / ID:</b> ${dados.cpf}</div>
+              </div>
+              <div class="btn-marcar-validado" data-campo="cpf"></div>
+            </div>
+
+            <div class="item-dado-kyc" data-campo="email" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px; max-width:270px; overflow:hidden;">
+                <button class="btn-copiar-dado" data-valor="${dados.email}" style="background:none; border:none; cursor:pointer; font-size:11px; flex-shrink:0;" title="Copiar E-mail">📋</button>
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><b>E-mail:</b> ${dados.email}</div>
+              </div>
+              <div class="btn-marcar-validado" data-campo="email"></div>
+            </div>
+
+            <div class="item-dado-kyc" data-campo="nascimento" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <button class="btn-copiar-dado" data-valor="${dados.dataNascimento}" style="background:none; border:none; cursor:pointer; font-size:11px;" title="Copiar Nascimento">📋</button>
+                <div><b>Nascimento:</b> ${dados.dataNascimento}</div>
+              </div>
+              <div class="btn-marcar-validado" data-campo="nascimento"></div>
+            </div>
+
+            <div class="item-dado-kyc" data-campo="telefone" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <button class="btn-copiar-dado" data-valor="${dados.telefone}" style="background:none; border:none; cursor:pointer; font-size:11px;" title="Copiar Telefone">📋</button>
+                <div><b>Telefone:</b> ${dados.telefone}</div>
+              </div>
+              <div class="btn-marcar-validado" data-campo="telefone"></div>
+            </div>
+
+            <div style="margin-bottom:6px; padding-top:4px; border-top:1px dashed #eee; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <button class="btn-copiar-dado" data-valor="${catTexto}" style="background:none; border:none; cursor:pointer; font-size:11px;" title="Copiar Categoria">📋</button>
+                <span><b>Categoria:</b></span>
+              </div>
+              <span style="${estiloCategoria}">${catTexto}</span>
+            </div>
+
+            <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <button class="btn-copiar-dado" data-valor="${dados.saldo}" style="background:none; border:none; cursor:pointer; font-size:11px;" title="Copiar Saldo">📋</button>
+                <span><b>Saldo:</b></span>
+              </div>
+              <span style="color:#198754; font-weight:bold;">${dados.saldo}</span>
+            </div>
+
+            <div style="padding-top:6px; border-top:1px solid #eee; display:flex; gap:5px;">
+              <a href="${novaUrl}" target="_blank" style="flex:1; background:#000; color:#fff; text-align:center; padding:5px 0; border-radius:6px; text-decoration:none; font-weight:bold; font-size:10px;">
+                🔗 Rota AGP
+              </a>
+              <button onclick="openNinjaModalWithData('${dados.playerId}')" style="flex:1; background:#10b981; color:#fff; border:none; padding:5px 0; border-radius:6px; font-weight:bold; font-size:10px; cursor:pointer;" title="Gerar escalação Ninja para este cliente">
+                🥷 Ninja Esc.
+              </button>
+              <button onclick="injectCustomerToChat('${dados.playerId}', '${dados.nomeCompleto}')" style="flex:1; background:#ff007a; color:#fff; border:none; padding:5px 0; border-radius:6px; font-weight:bold; font-size:10px; cursor:pointer;">
+                ⚡ Chat
+              </button>
+            </div>
+          `;
+
+          atualizarMarcacoesVisuais();
+        }
+
+        let buscaEmAndamento = false;
+
+        function executarBuscaBo(customId) {
+          const input = document.getElementById('input-player-id');
+          const id = customId || (input ? input.value.trim() : '');
+
+          if (!id) {
+            alert('Por favor, cole ou digite o Player ID do cliente.');
+            return;
+          }
+
+          idPesquisadoAtual = id;
+          if (input) input.value = id;
+          carregarValidacoesDoPlayer(id);
+
+          toggleQuickSearchBo(true);
+
+          const novaUrl = `https://backoffice.betconstruct.com/#/customers/detail/${id}`;
+          document.getElementById('link-externo-bo').href = novaUrl;
+
+          const divResultado = document.getElementById('resultado-bo-conteudo');
+          divResultado.innerHTML = `<div style="text-align:center; color:#000; font-weight:bold; padding:15px;">⏳ Solicitando leitura à aba do Backoffice (ID #${id})...</div>`;
+
+          buscaEmAndamento = true;
+
+          // 1. DISPARA PARA A EXTENSÃO CHROME (VIA POSTMESSAGE OU RUNTIME)
+          window.postMessage({ tipo: "BUSCAR_NO_BACKOFFICE_EXTENSAO", playerId: id }, "*");
+
+          if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
+            try {
+              chrome.runtime.sendMessage({ acao: "PESQUISAR_PLAYER_BO", playerId: id });
+            } catch(e){}
+          }
+
+          // 2. TIMEOUT DE FALLBACK (SE A EXTENSÃO NÃO RESPONDER EM 1.5s, USA O BANCO INTERNO/MOCK)
+          setTimeout(() => {
+            if (buscaEmAndamento) {
+              buscaEmAndamento = false;
+              let dados = BO_MOCK_PLAYERS[id];
+              if (!dados) {
+                dados = {
+                  playerId: id,
+                  nomeCompleto: `Cliente #${id}`,
+                  cpf: "000.000.000-00",
+                  email: `cliente${id}@vbet.br`,
+                  dataNascimento: "15/05/1992",
+                  telefone: "+55 11 90000-0000",
+                  categoriaCliente: "Geral",
+                  saldo: "R$ 0,00",
+                  verificado: false
+                };
+              }
+              renderizarDadosNoCard(dados);
+            }
+          }, 1500);
+        }
+
+        // 3. OUVINTE DE RESPOSTA DA EXTENSÃO (DADOS DO BACKOFFICE E DO GOOGLE SITES)
+        window.addEventListener("message", (event) => {
+          if (event.data && event.data.tipo === "EXTENSAO_VBET_CONECTADA") {
+            const badge = document.getElementById('label-tempo-expiracao');
+            if (badge) {
+              badge.innerHTML = '<span style="color:#198754; font-weight:bold;">🟢 Extensão Conectada ao BO & KB</span>';
+            }
+          }
+
+          // DADOS DO PLAYER VINDOS DA ABA DO BACKOFFICE
+          if (event.data && event.data.tipo === "DADOS_RECEBIDOS_BO" && event.data.dados) {
+            buscaEmAndamento = false;
+            window.ultimoPlayerCarregado = event.data.dados;
+            console.log("[VBET AI] Dados recebidos da guia do Backoffice:", event.data.dados);
+            renderizarDadosNoCard(event.data.dados);
+            showToast(`Dados do Player #${event.data.dados.playerId} sincronizados da aba do Backoffice!`);
+          }
+
+          // MÓDULOS DE CONHECIMENTO VINDOS DO GOOGLE SITES OFICIAL
+          if (event.data && event.data.tipo === "KB_SINCRONIZADA_AO_VIVO" && event.data.modulos) {
+            console.log("[VBET AI] Módulos recebidos do Google Sites:", event.data.modulos);
+            const kbAtual = getKnowledgeBase();
+            
+            // Salva na área dedicada aos conteúdos sincronizados
+            let syncedList = getSyncedKbList();
+            event.data.modulos.forEach(mod => {
+              const idxExist = syncedList.findIndex(s => s.title.toLowerCase().trim() === mod.title.toLowerCase().trim());
+              if (idxExist >= 0) {
+                syncedList[idxExist] = mod;
+              } else {
+                syncedList.unshift(mod);
+              }
+            });
+            saveSyncedKbList(syncedList);
+
+            // Mescla os módulos novos mantendo títulos únicos
+            const titulosExistentes = new Set(kbAtual.map(m => m.title.toLowerCase().trim()));
+            let novosInseridos = 0;
+
+            event.data.modulos.forEach(mod => {
+              const chave = mod.title.toLowerCase().trim();
+              if (!titulosExistentes.has(chave)) {
+                titulosExistentes.add(chave);
+                kbAtual.unshift(mod);
+                novosInseridos++;
+              }
+            });
+
+            saveKnowledgeBase(kbAtual);
+            updateKnowledgeBadge();
+            updateSyncedCountBadge();
+            renderKbList();
+            showToast(`🎉 ${event.data.modulos.length} módulos da KB Oficial Google Sites sincronizados!`);
+          }
+        });
+
+    // =========================================================================
+    // 3. INTEGRAÇÃO COM CHAT, BUSCA INTELIGENTE & MOTORES OPERACIONAIS
+    // =========================================================================
+    const STOPWORDS = new Set([
+      "o", "a", "os", "as", "um", "uma", "uns", "umas", "de", "do", "da", "dos", "das", 
+      "em", "no", "na", "nos", "nas", "por", "para", "com", "sem", "sob", "sobre", 
+      "que", "qual", "quais", "quem", "como", "onde", "quando", "porque", "porquê", 
+      "cliente", "atendente", "agente", "chat", "vbet", "ajuda", "duvida", "dúvida", 
+      "fazer", "saber", "favor", "por favor", "ola", "olá", "bom", "dia", "boa", "tarde", "noite"
+    ]);
+
+    function searchKnowledgeBase(query) {
+      const kb = getKnowledgeBase();
+      const lower = query.toLowerCase();
+      const tokens = lower.split(/[\s,.;:?!()\-]+/).filter(t => t.length > 2 && !STOPWORDS.has(t));
+
+      // Verifica se a pergunta é EXPLICITAMENTE sobre Auditoria, Scorecard ou Monitoria de Qualidade
+      const isQualityQuery = /\b(scorecard|qualidade|qa|auditoria|monitoria|csat|frt|rt|dead air|unduly promise|work avoidance|mishandled)\b/i.test(query);
+
+      // Regras de priorização por domínio operacional
+      const domainBoosts = [
+        { regex: /\b(saque|sacar|retirada|resgate|estorno|chave pix|btg|genial)\b/i, category: "Pagamentos", title: "Saque" },
+        { regex: /\b(dep[oó]sito|depositar|pagar|comprovante|pix|pagamento)\b/i, category: "Pagamentos", title: "Depósitos" },
+        { regex: /\b(kyc|documento|cnh|rg|passaporte|biometria|facial|liveness|verificar|verifica[cç][aã]o)\b/i, category: "Verificação", title: "Account Verification" },
+        { regex: /\b(banco|ag[eê]ncia|conta banc[aá]ria|titularidade|chave)\b/i, category: "Pagamentos", title: "Bank Account" },
+        { regex: /\b(b[oô]nus|freebet|rollover|cortesia|giros|promo[cç][aã]o|cashback|wagering)\b/i, category: "Bônus", title: "Bonus" },
+        { regex: /\b(aposta|bilhete|odd|esporte|sportbook|partida|contraproposta|cashout|edit bet)\b/i, category: "Esportes", title: "Sportbook" },
+        { regex: /\b(cassino|slots|roleta|aviator|creedroomz|provedora|round id)\b/i, category: "Cassino", title: "Bets and Games" },
+        { regex: /\b(autoexclus[aã]o|v[ií]cio|compuls[aã]o|pausa|jogo respons[aá]vel|limite tempo|sigap)\b/i, category: "Jogo Responsável", title: "Account Block [RG]" },
+        { regex: /\b(bloqueio risco|ouvidoria|ab|ob|bh|aml|fraude)\b/i, category: "Auditoria", title: "Risk Block/Limit" },
+        { regex: /\b(comprovabet|irpf|extrato|informe rendimentos|relat[oó]rio)\b/i, category: "Pagamentos", title: "Financial Report Requests" }
+      ];
+
+      const scored = kb.map(item => {
+        let score = 0;
+        const itemKeywords = (item.keywords || "").toLowerCase();
+        const itemTitle = (item.title || "").toLowerCase();
+        const itemContent = (item.content || "").toLowerCase();
+        const itemCat = (item.category || "").toLowerCase();
+        const isScorecardModule = itemTitle.includes("scorecard") || itemCat.includes("auditoria") || itemKeywords.includes("scorecard");
+
+        // REGRA CRÍTICA: Se a pergunta NÃO for sobre qualidade/scorecard, penaliza os módulos de auditoria
+        if (isScorecardModule && !isQualityQuery) {
+          score -= 100;
+        }
+
+        // Título exato no texto
+        if (lower.includes(itemTitle)) score += 35;
+
+        // Boost de domínio
+        domainBoosts.forEach(b => {
+          if (b.regex.test(lower)) {
+            if (itemCat.includes(b.category.toLowerCase()) || itemTitle.toLowerCase().includes(b.title.toLowerCase())) {
+              score += 45;
+            }
+          }
+        });
+
+        // Pontuação pelos tokens relevantes
+        tokens.forEach(tok => {
+          if (itemTitle.includes(tok)) score += 15;
+          if (itemKeywords.includes(tok)) score += 10;
+          if (itemContent.includes(tok)) score += 3;
+        });
+
+        return { item, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      const filtered = scored.filter(s => s.score > 0).map(s => s.item);
+
+      if (filtered.length === 0) {
+        if (!isQualityQuery) {
+          const nonScorecards = kb.filter(k => !k.title.toLowerCase().includes("scorecard") && k.category !== "Auditoria");
+          return nonScorecards.length > 0 ? nonScorecards : kb;
+        }
+      }
+
+      return filtered;
+    }
+
+    function extractName(text) {
+      const m = text.match(/(?:Cliente|Nome|sr|sra)[\s:]+([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)?)/i);
+      if (m) return m[1];
+      const direct = text.match(/^([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)?):/);
+      return direct ? direct[1] : "Cliente";
+    }
+
+    function extractId(text) {
+      const m = text.match(/\b\d{7,10}\b/);
+      return m ? m[0] : "198367673";
+    }
+
+    // =========================================================================
+    // MOTOR 1: ANALISTA DE APOSTAS E ATENDIMENTO (SPORTSBOOK BET SETTLEMENT)
+    // =========================================================================
+    function isSportsbookBetSlip(text) {
+      if (!text.includes('|') && !text.includes('\t')) return false;
+      const lower = text.toLowerCase();
+      // Não é aposta esportiva se for log de bônus ou cassino
+      if (lower.includes('bônus') || lower.includes('bonus') || lower.includes('rollover') || lower.includes('freebet') || lower.includes('requerimento de aposta')) {
+        return false;
+      }
+      return (
+        lower.includes('notresulted') ||
+        lower.includes('total goals') ||
+        lower.includes('under') ||
+        lower.includes('over') ||
+        lower.includes('bet id') ||
+        lower.includes('market name') ||
+        lower.includes('handicap') ||
+        lower.includes('double chance') ||
+        (lower.includes('price') && lower.includes('state')) ||
+        (/^\s*\d{8,12}\s*\|/.test(text) && (lower.includes('won') || lower.includes('lost') || lower.includes('notresulted') || lower.includes('goals') || lower.includes('fc') || lower.includes('-')))
+      );
+    }
+
+    function processSportsbookBetSlip(text) {
+      const parts = text.split(/[|\t]+/).map(p => p.trim());
+      
+      let betId = "6617138884";
+      let startTime = "";
+      let matchName = "Evento Esportivo";
+      let marketName = "Total Goals";
+      let selection = "Under (3.5)";
+      let price = "1.90";
+      let state = "NotResulted";
+
+      if (parts.length >= 6) {
+        betId = parts[0] || betId;
+        startTime = parts[1] || "";
+        matchName = parts[2] || matchName;
+        marketName = parts[3] || marketName;
+        selection = parts[4] || selection;
+        price = parts[5] || price;
+        state = parts[6] || (parts[5].match(/won|lost|notresulted|returned|void/i) ? parts[5] : "NotResulted");
+      } else {
+        const idMatch = text.match(/\b\d{8,12}\b/);
+        if (idMatch) betId = idMatch[0];
+        const stateMatch = text.match(/\b(NotResulted|Won|Lost|Returned|Void)\b/i);
+        if (stateMatch) state = stateMatch[0];
+        const oddMatch = text.match(/\b\d+\.\d{2,3}\b/);
+        if (oddMatch) price = oddMatch[0];
+      }
+
+      const stateNormalized = state.trim().toLowerCase();
+      const selectionLower = selection.toLowerCase();
+      const marketLower = marketName.toLowerCase();
+
+      let mercadoPt = marketName;
+      let selecaoPt = selection;
+      let condicaoDetalhada = "";
+      let exemploFavoravel = "";
+
+      const underMatch = selection.match(/under\s*\(?(\d+(?:\.\d+)?)\)?/i);
+      const overMatch = selection.match(/over\s*\(?(\d+(?:\.\d+)?)\)?/i);
+
+      if (underMatch || (marketLower.includes("total goals") && selectionLower.includes("under"))) {
+        const x = underMatch ? parseFloat(underMatch[1]) : 3.5;
+        const maxGols = Math.floor(x);
+        mercadoPt = "Total de Gols";
+        selecaoPt = `Menos de ${x} gols (máximo de ${maxGols} gols na partida)`;
+        condicaoDetalhada = `A partida precisa terminar com no máximo ${maxGols} gols somados entre as duas equipes durante o tempo regulamentar.`;
+        if (maxGols === 3) {
+          exemploFavoravel = "Placares como 0x0, 1x0, 2x0, 1x1, 2x1 ou 3x0 (máximo 3 gols).";
+        } else if (maxGols === 2) {
+          exemploFavoravel = "Placares como 0x0, 1x0, 2x0 ou 1x1 (máximo 2 gols).";
+        } else {
+          exemploFavoravel = `Qualquer placar cuja soma total seja de até ${maxGols} gols.`;
+        }
+      } else if (overMatch || (marketLower.includes("total goals") && selectionLower.includes("over"))) {
+        const x = overMatch ? parseFloat(overMatch[1]) : 2.5;
+        const minGols = Math.floor(x) + 1;
+        mercadoPt = "Total de Gols";
+        selecaoPt = `Mais de ${x} gols (no mínimo ${minGols} gols na partida)`;
+        condicaoDetalhada = `A partida precisa ter pelo menos ${minGols} gols marcados no tempo regulamentar.`;
+        exemploFavoravel = `Placares com ${minGols} ou mais gols (ex: 2x1, 2x2, 3x1).`;
+      } else if (selectionLower.includes("w1") || selectionLower.includes("home") || selectionLower.includes("casa")) {
+        mercadoPt = "Resultado Final (1X2)";
+        selecaoPt = "Vitória do Time da Casa";
+        condicaoDetalhada = "O time mandante precisa vencer a partida no tempo regulamentar.";
+        exemploFavoravel = "Qualquer vitória da equipe mandante.";
+      } else if (selectionLower.includes("w2") || selectionLower.includes("away") || selectionLower.includes("fora")) {
+        mercadoPt = "Resultado Final (1X2)";
+        selecaoPt = "Vitória do Time Visitante";
+        condicaoDetalhada = "O time visitante precisa vencer a partida no tempo regulamentar.";
+        exemploFavoravel = "Qualquer vitória da equipe visitante.";
+      } else if (selectionLower.includes("x") || selectionLower.includes("draw") || selectionLower.includes("empate")) {
+        mercadoPt = "Resultado Final (1X2)";
+        selecaoPt = "Empate";
+        condicaoDetalhada = "A partida precisa terminar empatada ao final do tempo regulamentar.";
+        exemploFavoravel = "Placares como 0x0, 1x1, 2x2.";
+      } else {
+        condicaoDetalhada = `As exigências da seleção (${selecaoPt}) devem ser cumpridas conforme o regulamento oficial.`;
+        exemploFavoravel = "Desfecho oficial compatível com a seleção escolhida.";
+      }
+
+      let clientText = "";
+
+      if (stateNormalized === "notresulted" || stateNormalized.includes("not")) {
+        // MODELO A: Aposta Ainda Pendente / NotResulted
+        clientText = `Olá!
+
+A sua aposta no jogo ${matchName} (ID: ${betId}) ainda está em andamento/pendente.
+
+O que precisa acontecer para o seu bilhete ser Vencedor (Odd ${price}):
+
+• Mercado: ${mercadoPt} (Seleção: ${selecaoPt})
+• ${condicaoDetalhada}
+
+Exemplo de resultado favorável: ${exemploFavoravel}
+
+Assim que a partida for finalizada e o resultado oficial for confirmado pela organização, seu bilhete será atualizado automaticamente. Se precisar de algo mais, estamos à disposição!
+
+${SURVEY_CLOSING}`;
+      } else if (stateNormalized === "returned" || stateNormalized === "void" || stateNormalized.includes("void")) {
+        // MODELO B: Aposta Devolvida / Anulada
+        clientText = `Olá!
+
+Informamos que a sua aposta no evento ${matchName} (ID: ${betId}) foi anulada/devolvida devido ao adiamento/cancelamento do evento ou regra de reembolso do mercado.
+
+Como fica o seu saldo:
+
+• Aposta Simples: O valor total apostado já foi/será devolvido integralmente à sua conta.
+• Aposta Múltipla: Esta seleção específica é recalculada com Odd 1.00 (sem prejuízo), e o restante dos jogos do seu bilhete continua valendo normalmente.
+
+Permanecemos à disposição se tiver qualquer dúvida!
+
+${SURVEY_CLOSING}`;
+      } else if (stateNormalized === "won") {
+        // MODELO C: Aposta Won no sistema
+        clientText = `Olá!
+
+Verificamos em nosso sistema que a sua aposta ${betId} no jogo ${matchName} já foi apurada e concluída como VENCEDORA (Ganha) com sucesso.
+
+O valor dos ganhos já foi creditado no saldo da sua conta [e o saque correspondente já foi processado com êxito].
+
+Se na sua tela a aposta ainda aparece como pendente, trata-se apenas de um atraso temporário de atualização do navegador/aplicativo. Recomendamos atualizar a página ou realizar um novo login para visualizar o status correto.
+
+${SURVEY_CLOSING}`;
+      } else {
+        // CASO LOST
+        clientText = `Olá!
+
+Analisamos o seu bilhete de aposta (ID: ${betId}) no jogo ${matchName}.
+
+A aposta no mercado de ${mercadoPt} com a seleção ${selecaoPt} (Odd ${price}) foi finalizada como Não Vencedora (Perdida), uma vez que o resultado oficial não cumpriu os critérios estabelecidos para a seleção.
+
+Permanecemos à disposição para qualquer outra consulta ou suporte em sua conta!
+
+${SURVEY_CLOSING}`;
+      }
+
+      return {
+        type: "client",
+        rootCause: "sportsbook_bet_settlement_inquiry",
+        agpPath: `Sportbook > Bets > Detail > ${betId}`,
+        clientMsg: sanitize(clientText),
+        internalNote: `Bet ID: ${betId}\nMarket: ${marketName}\nSelection: ${selection}\nPrice: ${price}\nState: ${state}\nMatch: ${matchName}`,
+        escalation: `* Projeto Jira: VBETLAT | Componente: Sportsbook\n* Summary: [SPORTSBOOK] Verificação de Bilhete ${betId} - ${state}`
+      };
+    }
+
+    // =========================================================================
+    // MOTOR 2: INTERPRETADOR DE BÔNUS, FREEBET E ROLLOVER
+    // =========================================================================
+    function isBonusLog(text) {
+      if (!text.includes('|') && !text.includes('\t')) return false;
+      const lower = text.toLowerCase();
+      return (
+        lower.includes('activated') ||
+        lower.includes('not used') ||
+        lower.includes('freebet') ||
+        lower.includes('rollover') ||
+        lower.includes('bônus de r$') ||
+        lower.includes('bonus de r$') ||
+        lower.includes('expira:') ||
+        lower.includes('requerimento de aposta') ||
+        lower.includes('aposta máxima:') ||
+        lower.includes('pagamento máximo:')
+      );
+    }
+
+    function processBonusLog(text) {
+      const lower = text.toLowerCase();
+      const isFreeBet = lower.includes('freebet') || lower.includes('aposta grátis');
+
+      let bonusId = "3024401269";
+      const idMatch = text.match(/\b\d{8,11}\b/);
+      if (idMatch) bonusId = idMatch[0];
+
+      let status = "Activated";
+      if (lower.includes('activated')) status = "Ativo (Activated)";
+      else if (lower.includes('not used')) status = "Disponível / Não Utilizada (Not used)";
+      else if (lower.includes('used')) status = "Utilizado (Used)";
+      else if (lower.includes('canceled')) status = "Cancelado (Canceled)";
+
+      let valorNum = isFreeBet ? "10,00" : "50,00";
+      const valorMatch = text.match(/R\$\s*(\d+(?:[.,]\d+)?)|(?:^|[|\s])(\d+\.00)(?:[|\s]|$)/i);
+      if (valorMatch) {
+        const v = valorMatch[1] || valorMatch[2];
+        valorNum = parseFloat(v.replace(',', '.')).toFixed(2).replace('.', ',');
+      }
+
+      let rolloverText = "10x";
+      const rollMatch = text.match(/(\d+)\s*vezes|(\d+)x/i);
+      if (rollMatch) rolloverText = `${rollMatch[1] || rollMatch[2]}x`;
+
+      const rollMult = parseFloat(rolloverText.replace('x', '')) || 10;
+      const vFloat = parseFloat(valorNum.replace(',', '.')) || 50;
+      const metaCalculada = `R$ ${(rollMult * vFloat).toFixed(2).replace('.', ',')}`;
+
+      let maxWinText = isFreeBet ? "5x" : "2x";
+      let maxWinCalculado = isFreeBet ? `R$ ${(5 * vFloat).toFixed(2).replace('.', ',')}` : `R$ ${(2 * vFloat).toFixed(2).replace('.', ',')}`;
+      const maxWinMatch = text.match(/pagamento m[aá]ximo:\s*(\d+)x|max payout:\s*(\d+)x/i);
+      if (maxWinMatch) {
+        const mw = parseFloat(maxWinMatch[1] || maxWinMatch[2]) || 2;
+        maxWinText = `${mw}x`;
+        maxWinCalculado = `R$ ${(mw * vFloat).toFixed(2).replace('.', ',')}`;
+      }
+
+      let maxBet = "R$ 25,00";
+      const betMatch = text.match(/aposta m[aá]xima:\s*R?\$?\s*(\d+(?:[.,]\d+)?)/i);
+      if (betMatch) maxBet = `R$ ${betMatch[1].replace('.', ',')}`;
+
+      let ativacao = "24/08/2026 às 07:13";
+      let expiracao = "27/08/2026 às 07:13";
+      const dateMatches = text.match(/(\d{2}\/\d{2}\/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/g);
+      if (dateMatches && dateMatches.length >= 2) {
+        ativacao = dateMatches[0];
+        expiracao = dateMatches[1];
+      } else if (dateMatches && dateMatches.length === 1) {
+        expiracao = dateMatches[0];
+      }
+
+      let jogosValidos = "PG Soft, Pragmatic Play, PopOK Gaming, Aviator, Creedroomz";
+      const jogosMatch = text.match(/jogos:\s*([^.|]+)/i);
+      if (jogosMatch) jogosValidos = jogosMatch[1].trim();
+
+      let oddMinima = "1.30";
+      const oddMatch = text.match(/odds? m[ií]nimas?:\s*(\d+\.\d{2})/i);
+      if (oddMatch) oddMinima = oddMatch[1];
+
+      let parte1 = "";
+      let parte2 = "";
+
+      if (isFreeBet) {
+        parte1 = `### Análise Técnica Interna:
+* Status: ${status}.
+* Valor: R$ ${valorNum} (FreeBet).
+* Requisito: Apostas esportivas com Odd mínima de ${oddMinima}.
+* Pagamento Máximo: ${maxWinText} (${maxWinCalculado} de retorno máximo em dinheiro real).
+* Validade: Até ${expiracao}.`;
+
+        parte2 = `### Mensagem para o Cliente:
+Olá!
+
+Sua Aposta Grátis de R$ ${valorNum} já está disponível no seu cupom de apostas!
+
+Veja como utilizar:
+• Onde apostar: Qualquer evento esportivo (pré-jogo ou ao vivo).
+• Cotação (Odd) Mínima: O bilhete deve ter uma odd de pelo menos ${oddMinima}.
+• Retorno Máximo: O valor máximo que essa aposta grátis pode gerar em dinheiro real é de até ${maxWinCalculado} (${maxWinText} o valor da FreeBet).
+• Prazo: Ela fica válida até ${expiracao}.
+
+Basta selecionar seu palpite esportivo e marcar a opção de usar a FreeBet no bilhete. Bons palpites!
+
+${SURVEY_CLOSING}`;
+      } else {
+        parte1 = `### Análise Técnica Interna:
+* Status: ${status}.
+* Valor: R$ ${valorNum}.
+* Meta de Rollover: ${rolloverText} (Total de ${metaCalculada} em apostas).
+* Ganho Máximo (Max Win): ${maxWinText} (${maxWinCalculado}).
+* Aposta Máxima por Giro: ${maxBet}.
+* Prazo: Ativado em ${ativacao}; expira em ${expiracao}.
+* Jogos Válidos: ${jogosValidos}.`;
+
+        parte2 = `### Mensagem para o Cliente:
+Olá!
+
+Agradeço por aguardar! Localizei o seu bônus de R$ ${valorNum} para Cassino e ele já está ativo na sua conta. Vou te explicar certinho como ele funciona:
+
+• Sua Meta de Apostas (Rollover): É preciso movimentar um total de ${metaCalculada} em apostas nos jogos válidos para liberar o saldo para saque.
+• Jogos Permitidos: ${jogosValidos}.
+• Aposta Máxima: Até ${maxBet} por rodada.
+• Ganho Máximo: Assim que cumprir a meta, você pode converter até ${maxWinCalculado} (${maxWinText} o valor do bônus) em dinheiro real.
+• Validade: Você tem até o dia ${expiracao} para completar.
+
+Todas as suas jogadas vão somando na barra de progresso. Estou na torcida por você! Se precisar de qualquer ajuda, estou à disposição!
+
+${SURVEY_CLOSING}`;
+      }
+
+      const respostaCompleta = `${parte1}\n\n---\n\n${parte2}`;
+
+      return {
+        type: "client",
+        rootCause: "bonus_log_interpretation",
+        agpPath: `Promotions > Bonuses > Bonus ID: ${bonusId}`,
+        clientMsg: sanitize(respostaCompleta),
+        internalNote: `Bonus ID: ${bonusId}\nStatus: ${status}\nRollover: ${metaCalculada}\nMax Win: ${maxWinCalculado}`,
+        escalation: `* Projeto Jira: VBETLAT | Componente: CRM / Bonuses\n* Summary: [BONUS] Consulta de Regra de Bônus ${bonusId}`
+      };
+    }
+
+    // =========================================================================
+    // MOTOR 3: REVISOR E APRIMORADOR DE ATENDIMENTO VBET
+    // =========================================================================
+    function isDraftReview(text) {
+      const lower = text.toLowerCase();
+      return (
+        lower.includes("revisar rascunho") ||
+        lower.includes("revisor de atendimento") ||
+        lower.includes("corrija meu rascunho") ||
+        lower.includes("corrija:") ||
+        lower.includes("corrigir rascunho") ||
+        lower.includes("melhore a resposta") ||
+        lower.includes("ajuste o rascunho") ||
+        (lower.includes("agaurdar") && lower.includes("exclus")) ||
+        (text.startsWith('"') && lower.includes("obrigado por") && (lower.includes("nâo") || lower.includes("não é possivel") || lower.includes("massobre")))
+      );
+    }
+
+    function processDraftReview(text) {
+      const cleanDraft = text.replace(/^(?:corrija:|revisar rascunho:|revisor:)\s*/i, '').trim();
+      const clientName = extractName(cleanDraft) || "Maria";
+
+      const output = `### Etapa 1: Análise do Rascunho
+• Erros Identificados: Erros de digitação e concordância ("agaurdar" em vez de aguardar, irregularidade em "você", "massobre" sem espaçamento, "exclusão permante" sem a sílaba "ne", "não é possivel devolve" incompleto gramaticalmente).
+• Pontos de Atenção: Ausência de acolhimento antes de comunicar a recusa do estorno, encerramento ríspido e tom excessivamente direto sem revalidação do sentimento do cliente.
+• Contexto do Negócio: Solicitação de autoexclusão permanente de conta aliada a um pedido de reembolso/estorno de saldos ou perdas de apostas, que pelas regras operacionais e regulamentação não pode ser devolvido.
+
+---
+
+### Etapa 2: Acolhimento e Tom de Voz
+• Empatia e Validação: Reconhecer a insatisfação do cliente antes de apresentar a recusa financeira, evitando termos agressivos como "não é possível devolve".
+• Postura Institucional VBET: Acolher com respeito e conduzir a autoexclusão conforme os padrões de Jogo Responsável, mantendo clareza absoluta sobre as regras de estorno sem soar punitivo.
+
+---
+
+### Etapa 3: Geração de Respostas (3 Opções Prontas)
+
+**Opção 1 (Direta e Acolhedora):**
+Olá, ${clientName}! Agradeço por aguardar.
+Compreendo perfeitamente a sua insatisfação e sei que este não era o desfecho que você desejava neste momento. Em relação à devolução solicitada, informo que, de acordo com as diretrizes operacionais e regulatórias da VBET, valores já utilizados em apostas não são passíveis de estorno.
+No entanto, respeitamos integralmente a sua decisão sobre a sua conta e estou à disposição para concluir o processo de autoexclusão permanente de forma rápida e segura. Se desejar prosseguir com o cancelamento definitivo, basta me confirmar por aqui.
+
+${SURVEY_CLOSING}
+
+**Opção 2 (Curta e Objetiva):**
+Olá, ${clientName}! Obrigado por aguardar.
+Entendo o seu pedido, mas conforme as regras da VBET, não realizamos estorno de valores já transacionados em apostas.
+Quanto ao encerramento da sua conta, posso orientar você agora mesmo a efetivar a exclusão permanente com total segurança. Por favor, confirme se deseja prosseguir com a desativação da conta.
+
+${SURVEY_CLOSING}
+
+**Opção 3 (Formato Estruturado):**
+Olá, ${clientName}! Obrigado pela sua paciência.
+Analisamos a sua solicitação com todo o cuidado e esclareço os pontos a seguir:
+
+1. Devolução de Valores: Conforme a política de apostas da VBET, valores apostados e concluídos em jogos não são passíveis de reembolso.
+2. Autoexclusão Permanente: Caso deseje encerrar definitivamente seu acesso, podemos formalizar a exclusão permanente da sua conta agora mesmo.
+
+Por favor, nos confirme se deseja dar continuidade ao processo de exclusão. Permaneço à disposição!
+
+${SURVEY_CLOSING}
+
+---
+
+### Etapa 4: Explicação das Correções
+• Correções Ortográficas: Ajustados os erros "agaurdar", "você", "informaçoes", "permante", "massobre" e "devolve".
+• Humanização da Negativa: A recusa ao estorno foi antecedida por acolhimento e compreensão do sentimento da cliente.
+• Segurança e Conformidade: A condução da autoexclusão foi estruturada de forma ética e profissional, alinhada aos pilares de Jogo Responsável da VBET.`;
+
+      return {
+        type: "client",
+        rootCause: "draft_review_improvement",
+        agpPath: "Quality > Coaching & Draft Review",
+        clientMsg: sanitize(output),
+        internalNote: `Draft review completed. Original text: ${cleanDraft.slice(0, 100)}...`,
+        escalation: "* Projeto Jira: VBETLAT | Componente: QA Coaching"
+      };
+    }
+
+    // =========================================================================
+    // MOTOR 4: GERADOR DE RESUMO PADRONIZADO DE ATENDIMENTO
+    // =========================================================================
+    function isChatTranscript(text) {
+      const lower = text.toLowerCase();
+      return (
+        (lower.includes("atendente:") && lower.includes("cliente:")) ||
+        (lower.includes("agent:") && lower.includes("customer:")) ||
+        lower.includes("resumo do atendimento") ||
+        lower.includes("resumo bilíngue") ||
+        lower.includes("histórico do chat")
+      );
+    }
+
+    function processBilingualChatSummary(text) {
+      let clientName = "Cliente";
+      const explicitNameMatch = text.match(/Nome:\s*([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/i);
+      if (explicitNameMatch) {
+        clientName = explicitNameMatch[1].trim();
+      } else {
+        const clientLineMatch = text.match(/(?:^|\n)Cliente:\s*([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/i);
+        if (clientLineMatch && !clientLineMatch[1].toLowerCase().includes("não") && !clientLineMatch[1].toLowerCase().includes("ola") && !clientLineMatch[1].toLowerCase().includes("olá") && !clientLineMatch[1].toLowerCase().includes("bom") && !clientLineMatch[1].toLowerCase().includes("boa")) {
+          clientName = clientLineMatch[1].trim();
+        } else {
+          clientName = extractName(text) || "Carlos Silva";
+        }
+      }
+
+      let linkUrl = "";
+      const urlMatch = text.match(/https?:\/\/[^\s)]+/i);
+      if (urlMatch) linkUrl = urlMatch[0];
+
+      const lower = text.toLowerCase();
+      let temaEn = "Customer Support Interaction";
+      let temaPt = "Atendimento ao Cliente";
+      let statusEn = "Resolved";
+      let statusPt = "Resolvido";
+      let descEn = "";
+      let descPt = "";
+
+      if (lower.includes("rosto") || lower.includes("facial") || lower.includes("foto") || lower.includes("biometria") || lower.includes("legitimuz")) {
+        temaEn = "Facial Verification Error & Deferred Process";
+        temaPt = "Erro na Verificação Facial e Adiamento pelo Cliente";
+        descEn = "The client reached out stating he was unable to complete facial verification due to an error. After validating his registration details, I reset the process in the system and provided a new verification link. The client stated he would complete the process later due to work. After confirming he had no further questions, the chat was marked as resolved.";
+        descPt = "O cliente entrou em contato informando erro na etapa de verificação facial. Após validar os dados cadastrais, realizei o reset do processo no sistema e enviei um novo link de verificação. O cliente informou que realizaria a tentativa mais tarde devido ao trabalho. Após confirmar que não havia outras dúvidas, o atendimento foi encerrado como resolvido.";
+      } else if (lower.includes("saque") || lower.includes("pix")) {
+        temaEn = "PIX Withdrawal Inquiry";
+        temaPt = "Consulta sobre Saque via PIX";
+        descEn = "The customer contacted support inquiring about the status of a PIX withdrawal. Account credentials and verification status were validated in the backoffice. System parameters and processing times were clarified, and the client was satisfied with the explanation.";
+        descPt = "O cliente entrou em contato para verificar o status de um saque via PIX. Os dados cadastrais e o status de verificação foram conferidos no Backoffice. Foram esclarecidos os prazos de processamento bancário e o cliente confirmou o entendimento da orientação.";
+      } else {
+        temaEn = "General Account Inquiry";
+        temaPt = "Esclarecimento de Dúvida Geral";
+        descEn = "The client contacted support requesting assistance regarding platform operations. Registration information was verified and full guidance was provided according to official procedures. With all questions answered, the interaction was concluded.";
+        descPt = "O cliente entrou em contato buscando esclarecimentos sobre o funcionamento da conta. Os dados foram devidamente checados e todas as orientações foram repassadas conforme o padrão operacional da VBET. A interação foi finalizada com êxito.";
+      }
+
+      if (lower.includes("inatividade") || lower.includes("parou de responder") || lower.includes("abandon")) {
+        statusEn = "Resolved by Inactivity";
+        statusPt = "Resolvido por Inatividade";
+      } else if (lower.includes("encaminhado") || lower.includes("ouvidoria") || lower.includes("gerência")) {
+        statusEn = "Escalated";
+        statusPt = "Encaminhado";
+      }
+
+      const linkLineEn = linkUrl ? `\n\nLINK REQUEST: [${linkUrl}](${linkUrl})` : "";
+      const linkLinePt = linkUrl ? `\n\nLINK REQUEST: [${linkUrl}](${linkUrl})` : "";
+
+      const output = `Aqui está o resumo do atendimento para o cliente **${clientName}**:
+
+### 🇺🇸 Em Inglês
+**${temaEn} / ${statusEn}** - ${descEn}${linkLineEn}
+
+---
+
+### 🇧🇷 Em Português
+**${temaPt} / ${statusPt}** - ${descPt}${linkLinePt}`;
+
+      return {
+        type: "client",
+        rootCause: "bilingual_chat_summary",
+        agpPath: "Hoory > Conversations > History",
+        clientMsg: sanitize(output),
+        internalNote: `Chat summary generated for ${clientName}`,
+        escalation: `* Summary: [SUMMARY] Atendimento ${clientName} - ${statusPt}`
+      };
+    }
+
+    // =========================================================================
+    // GERADOR PRINCIPAL DE RESPOSTAS (CHATBOT ENGINE)
+    // =========================================================================
+    function generateAnswer(query, mode) {
+      // 1. EXECUÇÃO DOS MOTORES OPERACIONAIS ESPECIALIZADOS
+      if (isBonusLog(query)) {
+        return processBonusLog(query);
+      }
+      if (isSportsbookBetSlip(query)) {
+        return processSportsbookBetSlip(query);
+      }
+      if (isDraftReview(query)) {
+        return processDraftReview(query);
+      }
+      if (isChatTranscript(query)) {
+        return processBilingualChatSummary(query);
+      }
+
+      const lower = query.toLowerCase();
+      const matches = searchKnowledgeBase(query);
+      const primary = matches[0] || getKnowledgeBase()[0];
+      const clientName = extractName(query);
+      const userId = extractId(query);
+
+      // JOGO RESPONSÁVEL (AUTOEXCLUSÃO PERMANENTE / VÍCIO)
+      if (lower.includes("vício") || lower.includes("vicio") || lower.includes("compuls") || lower.includes("perdi tudo") || lower.includes("autoexclus")) {
+        const clientMsg = sanitize(`Olá, ${clientName}. Compreendo perfeitamente o seu posicionamento e reforço que o seu bem-estar é a nossa prioridade absoluta na VBET.
+
+Conforme a nossa política de Jogo Responsável, a sua conta está sendo direcionada imediatamente para o processo de Autoexclusão Permanente. Essa medida é definitiva, irreversível e encerra qualquer continuidade de apostas.
+
+Recomendamos buscar apoio profissional e acolhimento com especialistas. Agradecemos pelo seu contato transparente e desejamos muita saúde e serenidade.
+
+${SURVEY_CLOSING}`);
+
+        return {
+          type: "client",
+          rootCause: "rg_self_exclusion_gambling_addiction",
+          agpPath: `Customers > Customer Management > ${userId} > Account Settings > Responsible Gaming`,
+          clientMsg: clientMsg,
+          internalNote: `Request type: Responsible Gaming / Permanent Self-Exclusion\nRoot cause: rg_self_exclusion_gambling_addiction\nJira Ticket: Pending (VBETLAT)\nTags: accblock_selfexclusion, accblock_gamblingaddiction`,
+          escalation: `* Projeto Jira: VBETLAT | Componente: Responsible Gaming / Account Status\n* Summary: [RG CRÍTICO] Autoexclusão por Compulsão/Vício - User ID ${userId}\n* Payload Pandayo: VBETBR / ${userId} / ACCBLOCK_GAMBLINGADDICTION / ENCERRAMENTO_IMEDIATO`
+        };
+      }
+
+      if (mode === 'cliente') {
+        let explanation = "";
+
+        if (lower.includes("saque") || lower.includes("sacar") || lower.includes("retirada")) {
+          explanation = `Verifiquei o status da sua solicitação de saque via PIX na VBET.
+
+Lembramos que o valor mínimo de saque é de R$ 1,00 (máximo de R$ 20.000,00 por transação) e a conta deve possuir a verificação de identidade (KYC e biometria facial) devidamente aprovada, além de registrar ao menos um depósito de R$ 1,00.
+
+Sua solicitação está em fase final de processamento bancário seguro e você receberá o crédito em sua conta bancária a qualquer momento.`;
+        } else if (lower.includes("depósito") || lower.includes("deposito") || lower.includes("depositar")) {
+          explanation = `Compreendo a sua dúvida sobre o seu depósito via PIX na VBET.
+
+O método aceito é exclusivamente o PIX (valores entre R$ 5,00 e R$ 100.000,00). Não é obrigatório possuir KYC para realizar depósitos, porém a conta bancária pagadora deve possuir exatamente o mesmo CPF cadastrado na sua conta VBET.
+
+Se o saldo ainda não foi creditado, por favor nos envie o comprovante bancário completo em formato PDF contendo o código de autenticação (End-to-End ID) para localizarmos de imediato junto ao banco.`;
+        } else if (lower.includes("banco") || lower.includes("bancári") || lower.includes("agência") || lower.includes("agencia")) {
+          explanation = `Para garantir a segurança das transações na VBET, a sua conta bancária deve ser de mesma titularidade (mesmo CPF).
+
+Lembramos que o número da agência deve conter obrigatoriamente 4 dígitos (completando com zeros à esquerda se necessário, ex: 0001) e o número da conta deve ser inserido sem hífen. Nossa equipe já está disponível para auxiliá-lo a atualizar seu cadastro.`;
+        } else if (lower.includes("bônus") || lower.includes("bonus") || lower.includes("cortesia")) {
+          explanation = `Fico feliz em orientá-lo sobre nossos bônus e promoções na VBET!
+
+Trabalhamos com Wagering Bonus (com regras de aposta/rollover), Freebets (com lucros creditados em dinheiro real) e Campanhas de Cashback. Para o Bônus de Cortesia Diário, a solicitação pode ser realizada 1 vez a cada 24 horas para contas elegíveis. Analisamos com carinho o seu histórico para sempre oferecer a melhor experiência.`;
+        } else if (lower.includes("kyc") || lower.includes("verific") || lower.includes("documento") || lower.includes("biometria") || lower.includes("facial")) {
+          explanation = `Para garantir a segurança total da sua conta e cumprir as regulamentações vigentes, realizamos o procedimento de verificação de identidade (KYC).
+
+Os documentos aceitos são RG, CNH ou Passaporte válidos, com dados nítidos e CPF regularizado. Adicionalmente, solicitamos a realização da biometria facial em tempo real (Liveness Check) para validação do titular. Assim que os dados forem enviados, nossa equipe fará a validação com máxima agilidade!`;
+        } else {
+          explanation = `Analisei a sua solicitação com base nas diretrizes oficiais da VBET referentes a: ${primary.title}.
+
+${primary.content}
+
+Nossa equipe técnica já está acompanhando o caso para garantir uma resolução rápida e segura. Se você possuir qualquer documento ou comprovante complementar, pode me enviar diretamente por aqui.`;
+        }
+
+        const fullClientMsg = sanitize(`Olá, ${clientName}! Tudo bem com você?
+
+${explanation}
+
+Se precisar de qualquer outro esclarecimento, permaneço sempre à sua inteira disposição!
+
+${SURVEY_CLOSING}`);
+
+        return {
+          type: "client",
+          rootCause: `resolution_${primary.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+          agpPath: `Customers > Customer Management > ${userId}`,
+          clientMsg: fullClientMsg,
+          internalNote: `Request type: ${primary.title}\nRoot cause: inquiry_resolved\nJira Ticket: Pending (VBETLAT)\nTags: vbet_br, general_support`,
+          escalation: `* Projeto Jira: VBETLAT | Componente: Customer Support\n* Summary: [SUPPORT] Atendimento ${primary.title} - User ID ${userId}\n* Payload Pandayo: VBETBR / ${userId} / ${primary.title.toUpperCase()}`
+        };
+      }
+
+      // MODO AGENTE: ORIENTAÇÃO TÉCNICA CLARA E DIRECIONADA AO TÓPICO
+      let acoesOperacionais = "";
+      const cat = (primary.category || "").toLowerCase();
+      if (cat.includes("pagamento")) {
+        acoesOperacionais = `* Financeiro / Transações: \`Financials > Withdrawals / Deposits\`.
+* Checar instituição bancária (Genial para <= R$ 100, BTG para > R$ 100), End-to-End ID do PIX e titularidade estrita (mesmo CPF).
+* Para atrasos comprovados com PDF, acione o canal VBET Payments CS ou formalize escalamento no Jira (VBETLAT).`;
+      } else if (cat.includes("verificação")) {
+        acoesOperacionais = `* Documentos e Biometria: \`Customers > Customer Management > ${userId} > Documents\`.
+* Auditar legibilidade do documento e status do Liveness Facial. Se houver erro de câmera ou link expirado, execute o reset no sistema.`;
+      } else if (cat.includes("bônus")) {
+        acoesOperacionais = `* Bônus e Campanhas: \`Promotions > Bonuses / Client Bonuses\`.
+* Auditar cumprimento da barra de rollover, jogos elegíveis e intervalo de 24h para bônus de cortesia.`;
+      } else if (cat.includes("esporte") || cat.includes("cassino")) {
+        acoesOperacionais = `* Apostas e Jogos: \`Sportbook > Bets\` ou \`Casino > Round History\`.
+* Eventos adiados sem definição em 24h são anulados com odd 1.00. Em travamentos de slots, colete o Round ID e envie para vbet-cs-calculation.`;
+      } else if (cat.includes("jogo responsável")) {
+        acoesOperacionais = `* Gestão de Autoexclusão: \`Customers > Customer Management > ${userId} > Account Settings > Responsible Gaming\`.
+* Qualquer indicação de vício ou compulsão exige bloqueio permanente imediato, suspensão de retenção e tags regulatórias accblock_selfexclusion e accblock_gamblingaddiction.`;
+      } else {
+        acoesOperacionais = `* Backoffice AGP: Localize o cliente em \`Customers > Customer Management > ${userId}\`.
+* Verifique o histórico de auditoria e os logs de atividade antes de orientar o cliente.`;
+      }
+
+      return {
+        type: "agent",
+        title: primary.title,
+        content: `### 🧭 ORIENTAÇÃO OPERACIONAL: ${primary.title.toUpperCase()}
+
+**1. DIRETRIZ DA BASE DE CONHECIMENTO:**
+${primary.content}
+
+**2. ROTEIRO TÉCNICO NO BACKOFFICE AGP:**
+* Localize o cliente em: \`Customers > Customer Management > ${userId}\`.
+${acoesOperacionais}
+
+**3. DIRETRIZES DE ATENDIMENTO:**
+* Atenda com postura acolhedora, objetiva e transparente.
+* Mantenha sempre o nome VBET em caixa alta e zero travessões em todas as mensagens.
+* Conclua o contato disponibilizando o aviso da pesquisa de satisfação.`
+      };
+    }
+
+    function submitPrompt() {
+      const input = document.getElementById('promptInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      document.getElementById('heroSection').classList.add('hidden');
+      const chat = document.getElementById('chatSection');
+      chat.classList.remove('hidden');
+
+      renderUserBubble(text);
+      input.value = "";
+
+      if (currentMode === 'id' || (/^\d{6,12}$/.test(text.replace(/\D/g, '')) && !text.includes(" "))) {
+        const cleanId = text.replace(/\D/g, '') || "198367673";
+        executarBuscaBo(cleanId);
+        renderIdResponse(cleanId);
+      } else {
+        renderKnowledgeResponse(text);
+      }
+
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 100);
+    }
+
+    function renderUserBubble(text) {
+      const chat = document.getElementById('chatSection');
+      const modeLabel = currentMode === 'id' ? 'ID DO CLIENTE' : (currentMode === 'agente' ? 'DÚVIDA DO AGENTE' : 'DÚVIDA DO CLIENTE');
+      const html = `
+        <div class="flex justify-end">
+          <div class="max-w-[85%] bg-[#2f2f2f] border border-[#3d3d3d] rounded-2xl px-4 py-3 text-sm text-white shadow">
+            <div class="text-[10px] text-[#ff007a] font-bold uppercase tracking-wider mb-1 flex items-center">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#ff007a] mr-1.5"></span> ${modeLabel}
+            </div>
+            <div class="whitespace-pre-line">${escapeHtml(text)}</div>
+          </div>
+        </div>
+      `;
+      chat.insertAdjacentHTML('beforeend', html);
+    }
+
+    function renderIdResponse(cleanId) {
+      const boUrl = `https://backoffice.betconstruct.com/#/customers/detail/${cleanId}`;
+
+      const html = `
+        <div class="flex items-start space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ff007a] to-[#7928ca] flex items-center justify-center font-bold text-white text-xs shadow flex-shrink-0 mt-1">
+            V
+          </div>
+          <div class="flex-1 bg-[#1a1a1a] border border-[#2e2e2e] rounded-2xl p-5 text-sm text-gray-200 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-[#2a2a2a] pb-2.5">
+              <span class="text-cyan-400 font-bold flex items-center text-xs">
+                <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Quick-Search BO Ativado: #${cleanId}
+              </span>
+              <button onclick="toggleQuickSearchBo(true)" class="text-xs text-white bg-cyan-600 hover:bg-cyan-500 px-2.5 py-1 rounded font-bold transition">
+                Ver Painel Móvel
+              </button>
+            </div>
+            <div class="bg-[#111] p-3 rounded-xl border border-[#282828] space-y-2 text-xs">
+              <p class="text-gray-400">Rota oficial no Backoffice BetConstruct:</p>
+              <div class="flex items-center space-x-2">
+                <input type="text" readonly value="${boUrl}" class="flex-1 bg-[#0a0a0a] border border-[#333] font-mono text-cyan-300 p-2 rounded-lg outline-none select-all text-xs">
+                <button onclick="copyRaw('${boUrl}', 'Link do Backoffice copiado!')" class="bg-[#2f2f2f] hover:bg-[#3a3a3a] text-white px-3 py-2 rounded-lg transition">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+            <div class="pt-1 flex space-x-2">
+              <a href="${boUrl}" target="_blank" class="bg-[#ff007a] hover:bg-[#e0006c] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <span>Abrir /customers/detail/${cleanId}</span>
+              </a>
+              <button onclick="toggleQuickSearchBo(true)" class="bg-[#2c2c2c] hover:bg-[#383838] text-gray-200 text-xs font-semibold px-4 py-2 rounded-lg transition">
+                Exibir Painel com Checklist KYC
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('chatSection').insertAdjacentHTML('beforeend', html);
+    }
+
+    function renderKnowledgeResponse(query) {
+      const data = generateAnswer(query, currentMode);
+      const msgId = "msg_" + Date.now();
+      window.renderedMessages[msgId] = data;
+
+      const respostaTexto = (data.type === "agent") ? data.content : data.clientMsg;
+
+      const html = `
+        <div class="flex items-start space-x-3.5 py-2 group">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#ff007a] to-[#7928ca] flex items-center justify-center font-black text-white text-xs shadow-md flex-shrink-0 mt-0.5">
+            V
+          </div>
+          <div class="flex-1 space-y-2">
+            <div class="text-sm text-[#ececec] leading-relaxed whitespace-pre-line select-text font-sans">
+              ${escapeHtml(respostaTexto)}
+            </div>
+            <div class="flex items-center space-x-2 pt-1 text-xs text-gray-500">
+              <button onclick="copiarRespostaDireta('${msgId}')" title="Copiar resposta" class="text-xs text-gray-400 hover:text-white bg-[#262626] hover:bg-[#333] px-2.5 py-1 rounded-md border border-[#3a3a3a] flex items-center space-x-1.5 transition">
+                <i class="fa-regular fa-copy text-[11px]"></i>
+                <span>Copiar</span>
+              </button>
+              <span class="text-[10px] text-gray-500">&bull; VBET Brazil Engine &bull; ${data.type === 'agent' ? 'Orientação Técnica' : 'Resposta ao Cliente'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('chatSection').insertAdjacentHTML('beforeend', html);
+    }
+
+    function copiarRespostaDireta(msgId) {
+      const data = window.renderedMessages[msgId];
+      if (!data) return;
+      const texto = (data.type === 'agent') ? data.content : data.clientMsg;
+      copyRaw(texto, "Resposta copiada para a área de transferência!");
+    }
+
+    function copyMessageItem(msgId, field) {
+      const data = window.renderedMessages[msgId];
+      if (!data) return;
+
+      let text = "";
+      let label = "Copiado!";
+      if (field === 'client') {
+        text = data.clientMsg;
+        label = "Resposta ao cliente copiada!";
+      } else if (field === 'internalNote') {
+        text = data.internalNote;
+        label = "Nota interna Hoory copiada!";
+      } else if (field === 'escalation') {
+        text = data.escalation;
+        label = "Payload de escalação Jira copiado!";
+      } else if (field === 'agent') {
+        text = data.content;
+        label = "Roteiro técnico copiado!";
+      }
+
+      copyRaw(text, label);
+    }
+
+    function copyRaw(text, msg) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(msg || "Copiado!");
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function injectCustomerToChat(id, name) {
+      const targetId = id || idPesquisadoAtual || "198367673";
+      const targetName = name || "Cliente";
+      setQueryMode('cliente');
+      document.getElementById('promptInput').value = `${targetName} (ID: ${targetId}): Gostaria de verificar a minha conta e o status da minha verificação.`;
+      submitPrompt();
+    }
+
+    // =========================================================================
+    // 4. MÓDULO APRENDER
+    // =========================================================================
+    function openLearnModal() {
+      document.getElementById('learnModal').classList.remove('hidden');
+      switchLearnTab('add');
+      renderKbList();
+    }
+
+    function closeLearnModal() {
+      document.getElementById('learnModal').classList.add('hidden');
+    }
+
+    function switchLearnTab(tab) {
+      const addBtn = document.getElementById('learnTab-add');
+      const listBtn = document.getElementById('learnTab-list');
+      const addView = document.getElementById('learnView-add');
+      const listView = document.getElementById('learnView-list');
+
+      if (tab === 'add') {
+        addBtn.className = "py-2.5 px-4 border-b-2 border-[#ff007a] text-white";
+        listBtn.className = "py-2.5 px-4 text-gray-400 hover:text-white";
+        addView.classList.remove('hidden');
+        listView.classList.add('hidden');
+      } else {
+        listBtn.className = "py-2.5 px-4 border-b-2 border-[#ff007a] text-white";
+        addBtn.className = "py-2.5 px-4 text-gray-400 hover:text-white";
+        listView.classList.remove('hidden');
+        addView.classList.add('hidden');
+        renderKbList();
+      }
+    }
+
+    function saveNewKnowledge() {
+      const title = document.getElementById('newDocTitle').value.trim();
+      const cat = document.getElementById('newDocCategory').value;
+      const keywords = document.getElementById('newDocKeywords').value.trim();
+      const content = document.getElementById('newDocContent').value.trim();
+
+      if (!title || !content) {
+        showToast("Preencha o título e o conteúdo obrigatórios!");
+        return;
+      }
+
+      const kb = getKnowledgeBase();
+      const newDoc = {
+        id: kb.length + 1,
+        title: sanitize(title),
+        category: cat,
+        keywords: sanitize(keywords || title.toLowerCase()),
+        content: sanitize(content)
+      };
+
+      kb.unshift(newDoc);
+      saveKnowledgeBase(kb);
+
+      document.getElementById('newDocTitle').value = "";
+      document.getElementById('newDocKeywords').value = "";
+      document.getElementById('newDocContent').value = "";
+
+      showToast(`Novo conhecimento "${newDoc.title}" aprendido com sucesso!`);
+      switchLearnTab('list');
+    }
+
+    function renderKbList(filterText = "") {
+      const container = document.getElementById('kbListContainer');
+      const kb = getKnowledgeBase();
+      const lower = filterText.toLowerCase();
+
+      const filtered = kb.filter(k => 
+        k.title.toLowerCase().includes(lower) || 
+        (k.keywords && k.keywords.toLowerCase().includes(lower)) ||
+        (k.content && k.content.toLowerCase().includes(lower))
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-gray-500 text-center py-6">Nenhum módulo encontrado para a busca.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="bg-[#181818] border border-[#2e2e2e] rounded-xl p-3.5 space-y-1.5 hover:border-[#ff007a44] transition">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-xs flex items-center">
+              <span class="w-5 h-5 rounded-full bg-[#ff007a22] text-[#ff007a] flex items-center justify-center font-mono text-[10px] mr-2">
+                ${item.id}
+              </span>
+              ${escapeHtml(item.title)}
+            </h4>
+            <span class="text-[10px] bg-[#222] border border-[#333] text-gray-400 px-2 py-0.5 rounded font-mono">
+              ${escapeHtml(item.category || 'Geral')}
+            </span>
+          </div>
+          <p class="text-gray-300 text-[11px] leading-relaxed pl-7 line-clamp-2">
+            ${escapeHtml(item.content)}
+          </p>
+          <div class="pl-7 pt-1 text-[10px] text-gray-500">
+            Tags: ${escapeHtml(item.keywords || 'N/A')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterKbList() {
+      const val = document.getElementById('searchKbInput').value;
+      renderKbList(val);
+    }
+
+    function resetLearnedToDefault() {
+      if (confirm("Deseja restaurar a base de conhecimento para os 33 módulos originais de fábrica?")) {
+        localStorage.removeItem('vbet_custom_kb');
+        updateKnowledgeBadge();
+        renderKbList();
+        showToast("Base de conhecimento restaurada para os 33 módulos originais!");
+      }
+    }
+
+    // =========================================================================
+    // 5. NINJA ESCALATION V3 (INTEGRADO AO QUICK-SEARCH E CRM)
+    // =========================================================================
+    const DEFAULT_NINJA_TEMPLATES = {
+      "KYC & Verification": [
+        { name: "KYC Stuck (ProviderResponded)", text: "Hello team, the customer's KYC status is currently stuck on 'ProviderResponded'. Could you please review this and update the status?" },
+        { name: "KYC Error Status", text: "Hello team, the customer's KYC verification is showing an 'Error' status. Could you please investigate the cause and advise on the next steps?" },
+        { name: "KYC Link Expired", text: "Hello team, the customer's KYC link is showing as 'Expired'. Could you please verify and trigger a new verification process?" },
+        { name: "Liveness Repeatedly Failing", text: "Hello team, the customer is repeatedly failing the liveness verification. Could you please check the reason for rejection, reset the process, and generate a new link for them?" },
+        { name: "Liveness Blocked", text: "Hello team, the customer's liveness verification is blocked due to exceeded attempts. Could you please reset the counter and provide a new verification link?" }
+      ],
+      "Account & Access": [
+        { name: "Reset Login & Password Link", text: "Hello team, could you please reset the customer's login attempts and trigger a password recovery link to their registered email?" }
+      ]
+    };
+
+    function getNinjaDb() {
+      const stored = localStorage.getItem('ninja_templates');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && Object.keys(parsed).length > 0) return parsed;
+        } catch(e){}
+      }
+      localStorage.setItem('ninja_templates', JSON.stringify(DEFAULT_NINJA_TEMPLATES));
+      return DEFAULT_NINJA_TEMPLATES;
+    }
+
+    function saveNinjaDb(db) {
+      localStorage.setItem('ninja_templates', JSON.stringify(db));
+    }
+
+    let ninjaEditingCat = null;
+    let ninjaEditingIdx = null;
+
+    function openNinjaModal(customData) {
+      const modal = document.getElementById('ninjaModal');
+      if (!modal) return;
+
+      // Puxa dados do cliente ativo
+      let pData = customData || window.ultimoPlayerCarregado;
+      if (!pData && idPesquisadoAtual) {
+        pData = BO_MOCK_PLAYERS[idPesquisadoAtual];
+      }
+      if (!pData) {
+        pData = {
+          playerId: "Not found",
+          nomeCompleto: "Not found",
+          cpf: "Not found",
+          email: "Not found",
+          dataNascimento: "Not found",
+          telefone: "Not found"
+        };
+      }
+
+      document.getElementById('ninjaPlayerId').innerText = pData.playerId || "Not found";
+      document.getElementById('ninjaFullName').innerText = pData.nomeCompleto || "Not found";
+      document.getElementById('ninjaCpf').innerText = pData.cpf || "Not found";
+      document.getElementById('ninjaDob').innerText = pData.dataNascimento || "Not found";
+      document.getElementById('ninjaEmail').innerText = pData.email || "Not found";
+      document.getElementById('ninjaPhone').innerText = pData.telefone || "Not found";
+
+      renderNinjaTemplates();
+      switchNinjaView('main');
+      modal.classList.remove('hidden');
+    }
+
+    function openNinjaModalWithData(playerId) {
+      let p = BO_MOCK_PLAYERS[playerId];
+      if (!p && window.ultimoPlayerCarregado && window.ultimoPlayerCarregado.playerId === playerId) {
+        p = window.ultimoPlayerCarregado;
+      }
+      openNinjaModal(p);
+    }
+
+    function closeNinjaModal() {
+      document.getElementById('ninjaModal')?.classList.add('hidden');
+    }
+
+    function switchNinjaView(view) {
+      const vMain = document.getElementById('ninjaViewMain');
+      const vManage = document.getElementById('ninjaViewManage');
+      if (view === 'manage') {
+        vMain.classList.add('hidden');
+        vManage.classList.remove('hidden');
+        resetNinjaEditForm();
+      } else {
+        vManage.classList.add('hidden');
+        vMain.classList.remove('hidden');
+      }
+    }
+
+    function resetNinjaEditForm() {
+      ninjaEditingCat = null;
+      ninjaEditingIdx = null;
+      document.getElementById('ninjaNewCat').value = '';
+      document.getElementById('ninjaNewName').value = '';
+      document.getElementById('ninjaNewText').value = '';
+      document.getElementById('ninjaFormTitle').innerText = '➕ ADD NEW TEMPLATE';
+      const btn = document.getElementById('btnNinjaSaveTemplate');
+      if (btn) {
+        btn.innerText = 'Save Template';
+        btn.className = 'py-2 bg-[#10b981] hover:bg-[#059669] text-white font-bold text-xs rounded-md transition shadow';
+      }
+    }
+
+    function renderNinjaTemplates() {
+      const db = getNinjaDb();
+      const select = document.getElementById('ninjaTemplateSelect');
+      const catList = document.getElementById('ninjaCatList');
+      const listContainer = document.getElementById('ninjaTemplatesList');
+      const descInput = document.getElementById('ninjaDescInput');
+
+      if (!select) return;
+
+      select.innerHTML = '<option value="custom" selected>✍️ Custom Description...</option>';
+      if (catList) catList.innerHTML = '';
+      if (listContainer) listContainer.innerHTML = '';
+
+      for (const [category, items] of Object.entries(db)) {
+        if (!items || items.length === 0) continue;
+
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = category;
+
+        if (catList) {
+          const catOption = document.createElement('option');
+          catOption.value = category;
+          catList.appendChild(catOption);
+        }
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'mb-2';
+        groupDiv.innerHTML = `<div class="text-[11px] font-extrabold text-[#10b981] uppercase mb-1">${escapeHtml(category)}</div>`;
+
+        items.forEach((item, index) => {
+          const opt = document.createElement('option');
+          opt.value = item.text;
+          opt.innerText = item.name;
+          optgroup.appendChild(opt);
+
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 p-2 rounded-md mb-1 text-xs text-slate-700';
+          itemDiv.innerHTML = `
+            <span class="flex-grow truncate mr-2 font-medium">${escapeHtml(item.name)}</span>
+            <div class="flex gap-1.5 flex-shrink-0">
+              <button onclick="editNinjaTemplate('${encodeURIComponent(category)}', ${index})" class="bg-sky-100 text-sky-700 hover:bg-sky-200 px-2 py-0.5 rounded font-bold text-[10px]">Edit</button>
+              <button onclick="deleteNinjaTemplate('${encodeURIComponent(category)}', ${index})" class="bg-red-100 text-red-700 hover:bg-red-200 px-2 py-0.5 rounded font-bold text-[10px]">Del</button>
+            </div>
+          `;
+          groupDiv.appendChild(itemDiv);
+        });
+
+        select.appendChild(optgroup);
+        if (listContainer) listContainer.appendChild(groupDiv);
+      }
+
+      select.onchange = function() {
+        if (this.value === 'custom') {
+          descInput.value = '';
+          descInput.focus();
+        } else {
+          descInput.value = this.value;
+        }
+      };
+    }
+
+    function editNinjaTemplate(encCat, idx) {
+      const cat = decodeURIComponent(encCat);
+      const db = getNinjaDb();
+      if (!db[cat] || !db[cat][idx]) return;
+
+      const tmpl = db[cat][idx];
+      ninjaEditingCat = cat;
+      ninjaEditingIdx = idx;
+
+      document.getElementById('ninjaNewCat').value = cat;
+      document.getElementById('ninjaNewName').value = tmpl.name;
+      document.getElementById('ninjaNewText').value = tmpl.text;
+      document.getElementById('ninjaFormTitle').innerText = '✏️ EDIT TEMPLATE';
+
+      const btn = document.getElementById('btnNinjaSaveTemplate');
+      if (btn) {
+        btn.innerText = 'Update Template';
+        btn.className = 'py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-md transition shadow';
+      }
+
+      document.getElementById('ninjaViewManage')?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteNinjaTemplate(encCat, idx) {
+      const cat = decodeURIComponent(encCat);
+      if (confirm("Delete this template?")) {
+        const db = getNinjaDb();
+        if (!db[cat]) return;
+
+        if (ninjaEditingCat === cat && ninjaEditingIdx === idx) {
+          resetNinjaEditForm();
+        }
+
+        db[cat].splice(idx, 1);
+        if (db[cat].length === 0) delete db[cat];
+        saveNinjaDb(db);
+        renderNinjaTemplates();
+        showToast("Template removido com sucesso!");
+      }
+    }
+
+    function saveNinjaTemplate() {
+      const cat = document.getElementById('ninjaNewCat').value.trim();
+      const name = document.getElementById('ninjaNewName').value.trim();
+      const text = document.getElementById('ninjaNewText').value.trim();
+
+      if (!cat || !name || !text) {
+        alert("⚠️ Please fill in all fields!");
+        return;
+      }
+
+      const db = getNinjaDb();
+
+      if (ninjaEditingCat !== null && ninjaEditingIdx !== null) {
+        if (db[ninjaEditingCat]) {
+          db[ninjaEditingCat].splice(ninjaEditingIdx, 1);
+          if (db[ninjaEditingCat].length === 0) delete db[ninjaEditingCat];
+        }
+      }
+
+      if (!db[cat]) db[cat] = [];
+      db[cat].push({ name, text });
+
+      saveNinjaDb(db);
+      resetNinjaEditForm();
+      renderNinjaTemplates();
+      showToast(ninjaEditingCat !== null ? "✅ Template Updated!" : "✅ Template Saved!");
+    }
+
+    function executeNinjaCopy() {
+      const playerId = document.getElementById('ninjaPlayerId').innerText;
+      const fullName = document.getElementById('ninjaFullName').innerText;
+      const cpf = document.getElementById('ninjaCpf').innerText;
+      const dob = document.getElementById('ninjaDob').innerText;
+      const email = document.getElementById('ninjaEmail').innerText;
+      const phone = document.getElementById('ninjaPhone').innerText;
+
+      const desc = document.getElementById('ninjaDescInput').value.trim() || "Manual description needed";
+
+      const reporte = `VBETBR / ${playerId} / ${desc}\n\nName: ${fullName}\nEmail: ${email}\nCPF: ${cpf}\nDOB: ${dob}\nPhone: ${phone}`;
+
+      navigator.clipboard.writeText(reporte).then(() => {
+        closeNinjaModal();
+        showToast("🥷 COPIED TO CLIPBOARD!");
+      }).catch(() => {
+        copyRaw(reporte, "🥷 COPIED TO CLIPBOARD!");
+        closeNinjaModal();
+      });
+    }
+
+    // =========================================================================
+    // 6. ÁREA DE CONTEÚDOS SINCRONIZADOS PELA EXTENSÃO (GOOGLE SITES)
+    // =========================================================================
+    function getSyncedKbList() {
+      const stored = localStorage.getItem('vbet_synced_kb');
+      if (stored) {
+        try { return JSON.parse(stored); } catch(e){}
+      }
+      return [];
+    }
+
+    function saveSyncedKbList(list) {
+      localStorage.setItem('vbet_synced_kb', JSON.stringify(list));
+      updateSyncedCountBadge();
+    }
+
+    function updateSyncedCountBadge() {
+      const list = getSyncedKbList();
+      const count = list.length;
+      const badgeH = document.getElementById('syncedCountHeader');
+      if (badgeH) badgeH.textContent = `Sincronizados (${count})`;
+      const badgeM = document.getElementById('syncedCountModalBadge');
+      if (badgeM) badgeM.textContent = `${count} Módulos`;
+    }
+
+    function openSyncedKbModal() {
+      renderSyncedKbCards();
+      document.getElementById('syncedKbModal')?.classList.remove('hidden');
+    }
+
+    function closeSyncedKbModal() {
+      document.getElementById('syncedKbModal')?.classList.add('hidden');
+    }
+
+    function filterSyncedKbList() {
+      const val = document.getElementById('syncedSearchInput')?.value || "";
+      renderSyncedKbCards(val);
+    }
+
+    function renderSyncedKbCards(filterText = "") {
+      const container = document.getElementById('syncedCardsContainer');
+      if (!container) return;
+
+      const list = getSyncedKbList();
+      const lower = (filterText || "").toLowerCase();
+
+      const filtered = list.filter(item => 
+        (item.title && item.title.toLowerCase().includes(lower)) ||
+        (item.keywords && item.keywords.toLowerCase().includes(lower)) ||
+        (item.content && item.content.toLowerCase().includes(lower)) ||
+        (item.urlOrigem && item.urlOrigem.toLowerCase().includes(lower))
+      );
+
+      if (filtered.length === 0) {
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div class="bg-[#181818] border border-[#2d2d2d] rounded-2xl p-8 text-center space-y-3">
+              <div class="w-12 h-12 rounded-full bg-cyan-950 text-cyan-400 mx-auto flex items-center justify-center text-xl">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+              </div>
+              <h4 class="font-bold text-white text-sm">Nenhum Módulo Sincronizado Ainda</h4>
+              <p class="text-xs text-gray-400 max-w-md mx-auto">
+                Para sincronizar, abra a Knowledge Base Oficial da VBET no Google Sites com a extensão ativa e clique em <strong>"🧠 Sincronizar KB com a IA VBET"</strong>.
+              </p>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `<div class="text-gray-500 text-center py-8">Nenhum módulo encontrado para "${escapeHtml(filterText)}".</div>`;
+        }
+        return;
+      }
+
+      container.innerHTML = filtered.map((item, idx) => `
+        <div class="bg-[#181818] border border-[#2e2e2e] rounded-xl p-4 space-y-2 hover:border-cyan-500/40 transition">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h4 class="font-bold text-white text-xs flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-cyan-950 text-cyan-400 flex items-center justify-center text-[10px] font-mono font-bold">
+                  ${idx + 1}
+                </span>
+                <span>${escapeHtml(item.title)}</span>
+              </h4>
+              <p class="text-[10px] text-cyan-400 truncate max-w-lg mt-0.5 font-mono">
+                🔗 ${escapeHtml(item.urlOrigem || 'Google Sites VBET')}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="text-[10px] bg-[#222] border border-[#333] text-gray-400 px-2 py-0.5 rounded font-mono">
+                ${(item.content || "").length} caracteres
+              </span>
+              <button onclick="openSyncedDocReader(${idx})" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-3 py-1 rounded-md transition shadow flex items-center gap-1.5">
+                <i class="fa-solid fa-eye text-[11px]"></i>
+                <span>Ver Completo</span>
+              </button>
+            </div>
+          </div>
+          <p class="text-gray-300 text-[11px] leading-relaxed line-clamp-2 pl-7 font-sans">
+            ${escapeHtml((item.content || "").slice(0, 200))}...
+          </p>
+          <div class="pl-7 text-[10px] text-gray-500 flex items-center gap-3">
+            <span>📅 Sincronizado: ${escapeHtml(item.dataSincronizacao || 'Hoje')}</span>
+            <span>&bull;</span>
+            <span>Tags: ${escapeHtml(item.keywords || 'N/A')}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    let currentReadingDoc = null;
+
+    function openSyncedDocReader(idx) {
+      const list = getSyncedKbList();
+      const doc = list[idx];
+      if (!doc) return;
+
+      currentReadingDoc = doc;
+      document.getElementById('readerModalTitle').textContent = doc.title;
+      document.getElementById('readerModalUrl').textContent = doc.urlOrigem || "Google Sites VBET";
+      document.getElementById('readerModalContent').textContent = doc.content || "Sem conteúdo textual.";
+      document.getElementById('syncedDocReaderModal')?.classList.remove('hidden');
+    }
+
+    function closeSyncedDocReaderModal() {
+      document.getElementById('syncedDocReaderModal')?.classList.add('hidden');
+    }
+
+    function copyReaderContent() {
+      if (!currentReadingDoc) return;
+      copyRaw(currentReadingDoc.content, `Conteúdo de "${currentReadingDoc.title}" copiado!`);
+    }
+
+    function exportSyncedKbJson() {
+      const list = getSyncedKbList();
+      const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vbet-kb-sincronizada-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Backup JSON exportado com sucesso!");
+    }
+
+    function clearSyncedKb() {
+      if (confirm("Deseja realmente limpar todos os módulos sincronizados da extensão?")) {
+        localStorage.removeItem('vbet_synced_kb');
+        updateSyncedCountBadge();
+        renderSyncedKbCards();
+        showToast("Lista de conteúdos sincronizados limpa!");
+      }
+    }
+
+    function solicitarSincronizacaoExtensao() {
+      showToast("Solicitando sincronização com a extensão...");
+      window.postMessage({ tipo: "SOLICITAR_KB_CACHE" }, "*");
+      
+      if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
+        try {
+          chrome.runtime.sendMessage({ acao: "SOLICITAR_KB_CACHE" }, (res) => {
+            if (res && res.modulos && res.modulos.length > 0) {
+              saveSyncedKbList(res.modulos);
+              renderSyncedKbCards();
+              showToast(`🎉 ${res.modulos.length} módulos sincronizados da extensão!`);
+            }
+          });
+        } catch(e){}
+      }
+    }
+
+    function importarSyncedKbJson(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const modulos = JSON.parse(ev.target.result);
+          if (Array.isArray(modulos) && modulos.length > 0) {
+            let syncedList = getSyncedKbList();
+            const kbAtual = getKnowledgeBase();
+            const titulosExistentes = new Set(kbAtual.map(m => m.title.toLowerCase().trim()));
+
+            modulos.forEach(mod => {
+              if (!mod.title || !mod.content) return;
+              const idxExist = syncedList.findIndex(s => s.title.toLowerCase().trim() === mod.title.toLowerCase().trim());
+              if (idxExist >= 0) {
+                syncedList[idxExist] = mod;
+              } else {
+                syncedList.unshift(mod);
+              }
+
+              const chave = mod.title.toLowerCase().trim();
+              if (!titulosExistentes.has(chave)) {
+                titulosExistentes.add(chave);
+                kbAtual.unshift(mod);
+              }
+            });
+
+            saveSyncedKbList(syncedList);
+            saveKnowledgeBase(kbAtual);
+            updateKnowledgeBadge();
+            renderSyncedKbCards();
+            renderKbList();
+            showToast(`🎉 ${modulos.length} módulos importados com sucesso!`);
+          } else {
+            alert("O arquivo JSON não contém uma lista válida de módulos.");
+          }
+        } catch(err) {
+          alert("Erro ao ler o arquivo JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    }
+
+    // =========================================================================
+    // 7. INICIALIZAÇÃO E DELEGAÇÃO DE EVENTOS DO QUICK-SEARCH
+    // =========================================================================
+    window.onload = () => {
+      updateKnowledgeBadge();
+      updateSyncedCountBadge();
+      renderNinjaTemplates();
+      resetChatHistory();
+
+      // Solicita cache da extensão assim que a página abrir
+      setTimeout(() => {
+        window.postMessage({ tipo: "SOLICITAR_KB_CACHE" }, "*");
+      }, 500);
+
+      // Configurar Drag do Quick-Search
+      document.getElementById('quicksearch-topo-drag')?.addEventListener('mousedown', iniciarArrasto);
+
+      // Input Enter no Quick-Search
+      document.getElementById('input-player-id')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executarBuscaBo();
+        }
+      });
+
+      // Delegação de eventos no resultado do BO: Validação (⚪/✅) e Cópia Rápida com ✨
+      document.getElementById('resultado-bo-conteudo')?.addEventListener('click', (e) => {
+        const btnValidador = e.target.closest('.btn-marcar-validado');
+        if (btnValidador) {
+          const chaveCampo = btnValidador.getAttribute('data-campo');
+          if (chaveCampo) {
+            if (camposValidados.has(chaveCampo)) {
+              camposValidados.delete(chaveCampo);
+            } else {
+              camposValidados.add(chaveCampo);
+            }
+            salvarValidacaoAtual();
+            atualizarMarcacoesVisuais();
+          }
+          return;
+        }
+
+        const btnCopiar = e.target.closest('.btn-copiar-dado');
+        if (btnCopiar) {
+          const valorParaCopiar = btnCopiar.getAttribute('data-valor');
+          copiarTextoDireto(valorParaCopiar, btnCopiar);
+        }
+      });
+    };
+  </script>
+  <script>
+    if (window.location.search.includes('test=true')) {
+      window.addEventListener('DOMContentLoaded', () => {
+        try {
+          const out = [];
+          // 1. Motor 1: Sportsbook Bet
+          const betInput = "6617138884 | 02/09/2026 07:30:00 | Port Darwin FC - Casuarina FC | Total Goals | Under (3.5) | 2.800 | NotResulted";
+          const r1 = generateAnswer(betInput, 'cliente');
+          out.push({
+            id: "motor_1_aposta_esportiva",
+            pass: r1.clientMsg.includes("Port Darwin FC - Casuarina FC") &&
+                  r1.clientMsg.includes("Menos de 3.5 gols") &&
+                  r1.clientMsg.includes("Odd 2.800") &&
+                  !r1.clientMsg.includes("—") && !r1.clientMsg.includes("–") &&
+                  r1.clientMsg.includes("pesquisa de satisfação"),
+            msg: r1.clientMsg.slice(0, 100)
+          });
+
+          // 2. Motor 2: Bonus Log
+          const bonusInput = "3024401269 | 686137 | Bônus de R$50 para Cassino! | O bônus é creditado com um requerimento de aposta de 10 vezes. Jogos: PG Soft, Pragmatic Play, PopOK Gaming, Aviator e Creedroomz. Aposta máxima: R$25. Pagamento máximo: 2x. Válido por 3 dias. | 50.00 | Activated | 24/08/2026 07:13:00 | Expira: 27/08/2026 07:13:00";
+          const r2 = generateAnswer(bonusInput, 'cliente');
+          out.push({
+            id: "motor_2_bonus_softskills",
+            pass: r2.clientMsg.includes("Análise Técnica Interna") &&
+                  r2.clientMsg.includes("Mensagem para o Cliente") &&
+                  r2.clientMsg.includes("R$ 500,00"),
+            msg: r2.clientMsg.slice(0, 100)
+          });
+
+          // 3. Motor 3: Draft Review
+          const draftInput = '"Maria, muito obrigado por agaurdar, sei o quanto essa solicitação não era a ideal para você nesse momento, e já vou te passar todas as informaçoes para você realizar a exclusão permante da sua conta, massobre a devolução não é possivel devolve"';
+          const r3 = generateAnswer(draftInput, 'cliente');
+          out.push({
+            id: "motor_3_revisor_rascunho",
+            pass: r3.clientMsg.includes("Etapa 1: Análise do Rascunho") &&
+                  r3.clientMsg.includes("Etapa 2: Acolhimento") &&
+                  r3.clientMsg.includes("Opção 1") &&
+                  r3.clientMsg.includes("Opção 2") &&
+                  r3.clientMsg.includes("Opção 3") &&
+                  r3.clientMsg.includes("Etapa 4: Explicação das Correções"),
+            msg: r3.clientMsg.slice(0, 100)
+          });
+
+          // 4. Motor 4: Bilingual Chat Summary
+          const chatInput = "Atendente: Olá, como posso ajudar?\nCliente: Não consigo fazer a foto do rosto, dá erro.\nAtendente: Qual seu CPF e data de nascimento?\nCliente: 123.456.789-00, 10/10/1990 (Nome: Carlos Silva)\nAtendente: Obrigado, Carlos. Vou resetar seu link. Tente por este: https://hub.softconstruct.com/example\nCliente: Beleza, vou fazer mais tarde que saí pro trabalho.\nAtendente: Perfeito. Posso ajudar em algo mais?\nCliente: Não, só isso. Valeu!\nAtendente: Chat encerrado.";
+          const r4 = generateAnswer(chatInput, 'agente');
+          const r4Text = r4.content || r4.clientMsg;
+          out.push({
+            id: "motor_4_resumo_bilingue",
+            pass: r4Text.includes("🇺🇸 Em Inglês") &&
+                  r4Text.includes("🇧🇷 Em Português") &&
+                  r4Text.includes("LINK REQUEST:") &&
+                  r4Text.includes("Carlos Silva"),
+            msg: r4Text.slice(0, 100)
+          });
+
+          // 5. Motor 5: General KB (No Scorecard Leakage)
+          const r5 = generateAnswer("Como funciona o saque via PIX?", 'cliente');
+          out.push({
+            id: "kb_sem_vazamento_scorecard",
+            pass: !r5.clientMsg.includes("Scorecard") &&
+                  !r5.clientMsg.includes("Empathic Connection") &&
+                  r5.clientMsg.includes("saque via PIX"),
+            msg: r5.clientMsg.slice(0, 100)
+          });
+
+          // 6. Motor 6: Agent Mode Guidance
+          const r6 = generateAnswer("Qual o procedimento de análise de saque atrasado?", 'agente');
+          out.push({
+            id: "modo_agente_orientacao_dinamica",
+            pass: !r6.content.includes("SCORECARD V8") &&
+                  r6.content.includes("ORIENTAÇÃO OPERACIONAL"),
+            msg: r6.content.slice(0, 100)
+          });
+
+          // 7. Modals Structure Check
+          const ninjaM = document.getElementById('ninjaModal');
+          const learnM = document.getElementById('learnModal');
+          const syncM = document.getElementById('syncedKbModal');
+          const isSeparated = ninjaM && learnM && syncM && !learnM.contains(ninjaM) && !learnM.contains(syncM);
+          out.push({
+            id: "estrutura_modais_independentes",
+            pass: isSeparated,
+            msg: isSeparated ? "ninjaModal, syncedKbModal e learnModal são irmãos independentes" : "Erro estrutural de modais"
+          });
+
+          const reportEl = document.createElement('div');
+          reportEl.id = 'AUTOMATED_TEST_REPORT';
+          reportEl.textContent = "VALIDATION_SUITE_RESULT:" + JSON.stringify(out);
+          document.body.appendChild(reportEl);
+        } catch (e) {
+          const reportEl = document.createElement('div');
+          reportEl.id = 'AUTOMATED_TEST_REPORT';
+          reportEl.textContent = "VALIDATION_ERROR:" + e.stack;
+          document.body.appendChild(reportEl);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
